@@ -226,6 +226,7 @@ const AdminHub = () => {
               );
             })}
           </div>
+          </div>
         )}
 
       </div>

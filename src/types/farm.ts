@@ -76,10 +76,13 @@ export interface FinancialSummary {
 export interface FarmMetrics {
   totalArea: number;
   activeSensors: number;
-  alertsCount: number;
-  efficiency: number;
-  waterUsage: number;
-  energyUsage: number;
+  totalSensors: number;
+  activeCameras: number;
+  totalCameras: number;
+  criticalAlerts: number;
+  warningAlerts: number;
+  alertsCount: number;   // = criticalAlerts + warningAlerts
+  networkCoverage: number;
 }
 
 // ─── Zonas/Setores ────────────────────────────────────────────────────────────
@@ -109,8 +112,10 @@ export interface WeatherData {
   temperature: number;
   humidity: number;
   windSpeed: number;
+  uvIndex: string | number;
+  rainfall: number;
   condition: string;
-  forecast?: WeatherForecast[];
+  forecast?: Array<{ day: string; temp: number; condition: string }>;
 }
 
 // ─── Onboarding ───────────────────────────────────────────────────────────────

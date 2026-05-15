@@ -36,11 +36,16 @@ export function DashboardShell() {
   const { onboarding, isLoading, goToStep } = useOnboarding();
 
   // Mostra wizard ao novo usuário (step === "welcome" e isDemo=true)
+  // Usa sessionStorage para não reaparecer ao navegar entre páginas
   const [showWizard, setShowWizard] = useState(false);
 
   useEffect(() => {
     if (!isLoading && onboarding.isDemo && onboarding.step === "welcome") {
-      setShowWizard(true);
+      const alreadyShown = sessionStorage.getItem("argom_wizard_shown");
+      if (!alreadyShown) {
+        setShowWizard(true);
+        sessionStorage.setItem("argom_wizard_shown", "1");
+      }
     }
   }, [isLoading, onboarding.isDemo, onboarding.step]);
 

@@ -74,7 +74,7 @@ const defaultZones: Zone[] = [
 const defaultMetrics: FarmMetrics = {
   totalArea: 550, activeSensors: 0, totalSensors: 0,
   activeCameras: 0, totalCameras: 0, criticalAlerts: 0,
-  warningAlerts: 0, networkCoverage: 98,
+  warningAlerts: 0, alertsCount: 0, networkCoverage: 98,
 };
 
 const defaultWeather: WeatherData = {
@@ -204,15 +204,20 @@ export function FarmDataProvider({ children }: { children: ReactNode }) {
 
   // ============= Derived Metrics (SRP: cálculo reativo) =============
   useEffect(() => {
-    setMetrics(prev => ({
-      ...prev,
-      activeSensors: sensors.filter(s => s.status === 'online' || s.status === 'warning').length,
-      totalSensors: sensors.length,
-      activeCameras: sensors.filter(s => s.type === 'camera' && s.status !== 'offline').length,
-      totalCameras: sensors.filter(s => s.type === 'camera').length || prev.totalCameras,
-      criticalAlerts: sensors.filter(s => s.status === 'critical').length,
-      warningAlerts: sensors.filter(s => s.status === 'warning').length,
-    }));
+    setMetrics(prev => {
+      const criticalAlerts = sensors.filter(s => s.status === 'critical').length;
+      const warningAlerts = sensors.filter(s => s.status === 'warning').length;
+      return {
+        ...prev,
+        activeSensors: sensors.filter(s => s.status === 'online' || s.status === 'warning').length,
+        totalSensors: sensors.length,
+        activeCameras: sensors.filter(s => s.type === 'camera' && s.status !== 'offline').length,
+        totalCameras: sensors.filter(s => s.type === 'camera').length || prev.totalCameras,
+        criticalAlerts,
+        warningAlerts,
+        alertsCount: criticalAlerts + warningAlerts,
+      };
+    });
   }, [sensors]);
 
   useEffect(() => {

@@ -5,7 +5,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageCircle, Send, X, Bot, User, Loader2, Sparkles, Minimize2, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSensorData, useFinancialData } from "@/contexts/FarmDataContext";
@@ -83,13 +82,13 @@ export function AIChatAssistant() {
 
   if (!isOpen) {
     return (
-      <Button
+      <button
         onClick={() => { setIsOpen(true); setMinimized(false); }}
-        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 z-50"
+        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-2xl bg-primary text-primary-foreground hover:bg-primary/90 z-50 hover:scale-105 transition-all duration-300 flex items-center justify-center border-none cursor-pointer focus:outline-none focus:ring-4 focus:ring-primary/30"
         title="Abrir Argom AI"
       >
-        <MessageCircle className="h-6 w-6" />
-      </Button>
+        <MessageCircle className="h-6 w-6 text-primary-foreground" />
+      </button>
     );
   }
 
