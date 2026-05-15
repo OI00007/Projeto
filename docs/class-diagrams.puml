@@ -1,0 +1,266 @@
+@startuml Sistema ARGOM - Classes Principais (v3.0)
+
+' ========================================
+' INFRASTRUCTURE
+' ========================================
+
+class ErrorBoundary {
+    -hasError: boolean
+    -error: Error | null
+    +{static} getDerivedStateFromError(error: Error): State
+    +componentDidCatch(error: Error, info: ErrorInfo): void
+    +handleReset(): void
+    +render(): ReactNode
+}
+
+class ProtectedRoute {
+    +children: ReactNode
+    +render(): ReactNode
+}
+
+' ========================================
+' AUTH & CONTEXT
+' ========================================
+
+class AuthProvider {
+    -user: AuthUser | null
+    -session: AuthSession | null
+    -loading: boolean
+    +signOut(): Promise<void>
+}
+
+class FarmDataProvider {
+    -sensors: SensorReading[]
+    -zones: Zone[]
+    -weather: WeatherData
+    -financialData: FinancialData
+    -transactions: Transaction[]
+    -isLoading: boolean
+    +updateSensor(id: string, data: Record<string, unknown>): void
+}
+
+interface AuthUser {
+    +id: string
+    +email: string
+    +fullName?: string
+    +avatarUrl?: string
+}
+
+interface AuthSession {
+    +accessToken: string
+    +refreshToken: string
+    +expiresAt: number
+    +user: AuthUser
+}
+
+' ========================================
+' DOMAIN MODELS
+' ========================================
+
+class SensorReading {
+    +id: string
+    +name: string
+    +type: SensorType
+    +value: number
+    +unit: string
+    +status: SensorStatus
+    +location: string
+    +lastReading: Date
+}
+
+class WeatherData {
+    +temperature: number
+    +humidity: number
+    +precipitation: number
+    +windSpeed: number
+    +pressure: number
+    +forecast: WeatherForecast[]
+}
+
+class Transaction {
+    +id: string
+    +userId: string
+    +type: TransactionType
+    +amount: number
+    +category: string
+    +subcategory?: string
+    +status: TransactionStatus
+    +paymentMethod?: PaymentMethod
+    +tags?: string[]
+    +transactionDate: string
+}
+
+class Task {
+    +id: string
+    +userId: string
+    +title: string
+    +description?: string
+    +priority: TaskPriority
+    +status: TaskStatus
+    +category?: TaskCategory
+    +dueDate?: string
+    +assignedTo?: string
+}
+
+class Equipment {
+    +id: string
+    +name: string
+    +type: EquipmentType
+    +status: EquipmentStatus
+    +location: string
+    +lastMaintenance: string
+    +hoursUsed: number
+}
+
+class ProductionData {
+    +crop: string
+    +area: number
+    +expectedYield: number
+    +currentGrowth: number
+    +harvestDate: string
+    +status: CropStatus
+}
+
+class FinancialSummary {
+    +totalIncome: number
+    +totalExpenses: number
+    +profit: number
+    +profitMargin: number
+    +transactionCount: number
+    +period: string
+}
+
+' ========================================
+' ENUMS
+' ========================================
+
+enum SensorType {
+    temperature
+    humidity
+    soil_moisture
+    ph
+    light
+    pressure
+    wind_speed
+    rain
+}
+
+enum SensorStatus {
+    normal
+    warning
+    critical
+    offline
+}
+
+enum TransactionType {
+    income
+    expense
+}
+
+enum TransactionStatus {
+    pending
+    completed
+    cancelled
+}
+
+enum TaskPriority {
+    low
+    medium
+    high
+}
+
+enum TaskStatus {
+    pending
+    in_progress
+    completed
+}
+
+enum EquipmentStatus {
+    active
+    maintenance
+    offline
+}
+
+enum CropStatus {
+    planejado
+    plantado
+    crescimento
+    floracao
+    frutificacao
+    colheita
+}
+
+' ========================================
+' SERVICES & UTILITIES
+' ========================================
+
+class SecurityService {
+    +sanitizeText(input: string): string
+    +sanitizeUrlParam(param: string): string
+    +validateFileUpload(file: File): ValidationResult
+    +secureLog(level: string, msg: string, data: object): void
+}
+
+class RateLimiter {
+    -requests: number[]
+    -maxRequests: number
+    -windowMs: number
+    +canMakeRequest(): boolean
+    +reset(): void
+}
+
+class Constants {
+    +{static} API_TIMEOUT: number
+    +{static} RATE_LIMIT: object
+    +{static} PAGINATION: object
+    +{static} VALIDATION: object
+    +{static} ROUTES: object
+    +{static} ERROR_MESSAGES: object
+}
+
+' ========================================
+' RELATIONSHIPS
+' ========================================
+
+ErrorBoundary *-- AuthProvider : wraps
+AuthProvider *-- FarmDataProvider : wraps
+AuthProvider --> AuthUser : provides
+AuthProvider --> AuthSession : manages
+
+FarmDataProvider --> SensorReading : manages
+FarmDataProvider --> WeatherData : manages
+FarmDataProvider --> Transaction : manages
+FarmDataProvider --> FinancialSummary : calculates
+
+ProtectedRoute --> AuthProvider : checks auth
+
+SensorReading --> SensorType : uses
+SensorReading --> SensorStatus : uses
+Transaction --> TransactionType : uses
+Transaction --> TransactionStatus : uses
+Task --> TaskPriority : uses
+Task --> TaskStatus : uses
+Equipment --> EquipmentStatus : uses
+ProductionData --> CropStatus : uses
+
+SecurityService --> RateLimiter : uses
+
+note right of ErrorBoundary
+  **Padrão: Error Boundary**
+  Captura erros de renderização
+  React e exibe UI de fallback
+end note
+
+note right of FarmDataProvider
+  **Padrão: Context + Observer**
+  Realtime subscriptions do Supabase
+  Tipagem forte sem uso de 'any'
+end note
+
+note right of SecurityService
+  **Princípio: Defense in Depth**
+  Validação Zod + Sanitização XSS
+  + Rate Limiting + RLS
+end note
+
+@enduml

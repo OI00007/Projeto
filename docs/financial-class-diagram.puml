@@ -1,0 +1,412 @@
+@startuml Diagrama de Classes - Módulo Financeiro (SOLID & Design Patterns)
+
+' ========================================
+' INTERFACES (Interface Segregation Principle)
+' ========================================
+
+interface ITransactionRepository {
+  +create(transaction: Transaction): Promise<Transaction>
+  +update(id: string, data: Partial<Transaction>): Promise<Transaction>
+  +delete(id: string): Promise<void>
+  +findById(id: string): Promise<Transaction>
+  +findByFilters(filters: TransactionFilters): Promise<Transaction[]>
+}
+
+interface ITransactionValidator {
+  +validate(transaction: Transaction): ValidationResult
+  +sanitizeInput(data: any): Transaction
+}
+
+interface IFinancialCalculator {
+  +calculateTotal(transactions: Transaction[]): number
+  +calculateProfit(revenue: number, costs: number): number
+  +calculateMargin(profit: number, revenue: number): number
+  +calculateROI(profit: number, investment: number): number
+}
+
+interface IReportGenerator {
+  +generateReport(data: ReportData): Report
+  +exportToFormat(report: Report, format: ExportFormat): Blob
+}
+
+interface ICategoryStrategy {
+  +categorize(transaction: Transaction): string
+  +getSubcategories(category: string): string[]
+}
+
+interface IAlertObserver {
+  +update(alert: Alert): void
+  +getAlertLevel(): AlertLevel
+}
+
+interface IBudgetPolicy {
+  +evaluate(spending: number, budget: number): boolean
+  +calculateThreshold(budget: number): number
+}
+
+' ========================================
+' ABSTRACT CLASSES (Open/Closed Principle)
+' ========================================
+
+abstract class BaseTransaction {
+  #id: string
+  #userId: string
+  #farmId: string
+  #amount: number
+  #date: Date
+  #description: string
+  #createdAt: Date
+  #updatedAt: Date
+  
+  +{abstract} getType(): TransactionType
+  +{abstract} validate(): boolean
+  +getId(): string
+  +getAmount(): number
+  +setAmount(amount: number): void
+  +toJSON(): object
+}
+
+abstract class BaseValidator {
+  #rules: ValidationRule[]
+  
+  +{abstract} defineRules(): ValidationRule[]
+  +validate(data: any): ValidationResult
+  +addRule(rule: ValidationRule): void
+  #checkRule(rule: ValidationRule, data: any): boolean
+}
+
+abstract class FinancialMetric {
+  #name: string
+  #value: number
+  #unit: string
+  
+  +{abstract} calculate(data: any): number
+  +{abstract} format(): string
+  +getValue(): number
+  +compare(other: FinancialMetric): number
+}
+
+' ========================================
+' CONCRETE CLASSES (Single Responsibility Principle)
+' ========================================
+
+class Transaction extends BaseTransaction {
+  -type: TransactionType
+  -category: string
+  -subcategory: string
+  -paymentMethod: string
+  -referenceNumber: string
+  -tags: string[]
+  -status: TransactionStatus
+  
+  +getType(): TransactionType
+  +validate(): boolean
+  +setCategory(category: string): void
+  +addTag(tag: string): void
+  +updateStatus(status: TransactionStatus): void
+}
+
+class Income extends BaseTransaction {
+  -source: string
+  -cropType: string
+  
+  +getType(): TransactionType
+  +validate(): boolean
+  +setSource(source: string): void
+}
+
+class Expense extends BaseTransaction {
+  -supplier: string
+  -invoiceNumber: string
+  
+  +getType(): TransactionType
+  +validate(): boolean
+  +setSupplier(supplier: string): void
+}
+
+' ========================================
+' VALIDATORS (Single Responsibility)
+' ========================================
+
+class TransactionValidator extends BaseValidator {
+  -schema: ValidationSchema
+  
+  +defineRules(): ValidationRule[]
+  +validateAmount(amount: number): boolean
+  +validateDate(date: Date): boolean
+  +validateCategory(category: string): boolean
+}
+
+class BudgetValidator extends BaseValidator {
+  +defineRules(): ValidationRule[]
+  +validatePeriod(start: Date, end: Date): boolean
+  +validateAlertThreshold(threshold: number): boolean
+}
+
+' ========================================
+' STRATEGY PATTERN (Open/Closed Principle)
+' ========================================
+
+class ExpenseCategoryStrategy {
+  -categories: Map<string, string[]>
+  
+  +categorize(transaction: Transaction): string
+  +getSubcategories(category: string): string[]
+  +addCategory(category: string, subs: string[]): void
+}
+
+class IncomeCategoryStrategy {
+  -categories: Map<string, string[]>
+  
+  +categorize(transaction: Transaction): string
+  +getSubcategories(category: string): string[]
+  +identifySource(transaction: Transaction): string
+}
+
+class AutoCategorizer {
+  -strategy: ICategoryStrategy
+  
+  +setStrategy(strategy: ICategoryStrategy): void
+  +categorizeTransaction(transaction: Transaction): void
+  +learnFromHistory(transactions: Transaction[]): void
+}
+
+' ========================================
+' FACTORY PATTERN
+' ========================================
+
+class TransactionFactory {
+  -{static} instance: TransactionFactory
+  
+  -constructor()
+  +{static} getInstance(): TransactionFactory
+  +createTransaction(type: TransactionType, data: any): BaseTransaction
+  +createIncome(data: any): Income
+  +createExpense(data: any): Expense
+}
+
+' ========================================
+' REPOSITORY PATTERN (Dependency Inversion)
+' ========================================
+
+class SupabaseTransactionRepository {
+  -client: SupabaseClient
+  -tableName: string
+  
+  +create(transaction: Transaction): Promise<Transaction>
+  +update(id: string, data: Partial<Transaction>): Promise<Transaction>
+  +delete(id: string): Promise<void>
+  +findById(id: string): Promise<Transaction>
+  +findByFilters(filters: TransactionFilters): Promise<Transaction[]>
+  -mapToEntity(data: any): Transaction
+  -mapToDatabase(transaction: Transaction): any
+}
+
+' ========================================
+' SERVICES (Single Responsibility)
+' ========================================
+
+class FinancialService {
+  -repository: ITransactionRepository
+  -validator: ITransactionValidator
+  -calculator: IFinancialCalculator
+  -categorizer: AutoCategorizer
+  
+  +constructor(repo: ITransactionRepository, validator: ITransactionValidator, calculator: IFinancialCalculator)
+  +addTransaction(data: any): Promise<Transaction>
+  +updateTransaction(id: string, data: any): Promise<Transaction>
+  +deleteTransaction(id: string): Promise<void>
+  +getTransactions(filters: TransactionFilters): Promise<Transaction[]>
+  +calculateMetrics(filters: TransactionFilters): Promise<FinancialMetrics>
+}
+
+class CalculatorService {
+  +calculateTotal(transactions: Transaction[]): number
+  +calculateProfit(revenue: number, costs: number): number
+  +calculateMargin(profit: number, revenue: number): number
+  +calculateROI(profit: number, investment: number): number
+  +calculateGrowth(current: number, previous: number): number
+  +aggregateByPeriod(transactions: Transaction[], period: Period): Map<string, number>
+}
+
+class ReportService {
+  -calculator: IFinancialCalculator
+  -formatter: ReportFormatter
+  
+  +generateReport(data: ReportData): Report
+  +exportToFormat(report: Report, format: ExportFormat): Blob
+  +scheduleReport(config: ReportConfig): void
+}
+
+' ========================================
+' OBSERVER PATTERN
+' ========================================
+
+class BudgetMonitor {
+  -observers: IAlertObserver[]
+  -budgets: Budget[]
+  -transactions: Transaction[]
+  
+  +addObserver(observer: IAlertObserver): void
+  +removeObserver(observer: IAlertObserver): void
+  +notifyObservers(alert: Alert): void
+  +checkBudgetLimits(): void
+  +evaluateSpending(budget: Budget): void
+}
+
+class EmailAlertObserver {
+  -emailService: EmailService
+  -threshold: number
+  
+  +update(alert: Alert): void
+  +getAlertLevel(): AlertLevel
+  -sendEmail(alert: Alert): void
+}
+
+class NotificationAlertObserver {
+  -notificationService: NotificationService
+  
+  +update(alert: Alert): void
+  +getAlertLevel(): AlertLevel
+  -showNotification(alert: Alert): void
+}
+
+' ========================================
+' VALUE OBJECTS
+' ========================================
+
+class Money {
+  -amount: number
+  -currency: string
+  
+  +constructor(amount: number, currency: string)
+  +add(other: Money): Money
+  +subtract(other: Money): Money
+  +multiply(factor: number): Money
+  +equals(other: Money): boolean
+  +toString(): string
+}
+
+class DateRange {
+  -startDate: Date
+  -endDate: Date
+  
+  +constructor(start: Date, end: Date)
+  +contains(date: Date): boolean
+  +getDays(): number
+  +equals(other: DateRange): boolean
+}
+
+' ========================================
+' DECORATORS
+' ========================================
+
+class CachedTransactionRepository {
+  -repository: ITransactionRepository
+  -cache: Cache
+  -ttl: number
+  
+  +constructor(repository: ITransactionRepository, cache: Cache)
+  +create(transaction: Transaction): Promise<Transaction>
+  +findById(id: string): Promise<Transaction>
+  +findByFilters(filters: TransactionFilters): Promise<Transaction[]>
+  -invalidateCache(key: string): void
+}
+
+class LoggedTransactionRepository {
+  -repository: ITransactionRepository
+  -logger: Logger
+  
+  +constructor(repository: ITransactionRepository, logger: Logger)
+  +create(transaction: Transaction): Promise<Transaction>
+  +update(id: string, data: Partial<Transaction>): Promise<Transaction>
+  +delete(id: string): Promise<void>
+  -log(operation: string, data: any): void
+}
+
+' ========================================
+' RELATIONSHIPS
+' ========================================
+
+' Implementations
+SupabaseTransactionRepository ..|> ITransactionRepository
+TransactionValidator ..|> ITransactionValidator
+CalculatorService ..|> IFinancialCalculator
+ReportService ..|> IReportGenerator
+ExpenseCategoryStrategy ..|> ICategoryStrategy
+IncomeCategoryStrategy ..|> ICategoryStrategy
+EmailAlertObserver ..|> IAlertObserver
+NotificationAlertObserver ..|> IAlertObserver
+
+' Inheritance
+Transaction --|> BaseTransaction
+Income --|> BaseTransaction
+Expense --|> BaseTransaction
+TransactionValidator --|> BaseValidator
+BudgetValidator --|> BaseValidator
+
+' Composition
+FinancialService *-- ITransactionRepository
+FinancialService *-- ITransactionValidator
+FinancialService *-- IFinancialCalculator
+FinancialService *-- AutoCategorizer
+
+AutoCategorizer *-- ICategoryStrategy
+
+BudgetMonitor *-- IAlertObserver
+BudgetMonitor o-- Transaction
+
+ReportService *-- IFinancialCalculator
+
+' Decorator Pattern
+CachedTransactionRepository ..|> ITransactionRepository
+CachedTransactionRepository o-- ITransactionRepository
+LoggedTransactionRepository ..|> ITransactionRepository
+LoggedTransactionRepository o-- ITransactionRepository
+
+' Factory
+TransactionFactory ..> Transaction : creates
+TransactionFactory ..> Income : creates
+TransactionFactory ..> Expense : creates
+
+' Usage
+Transaction --> Money
+Transaction --> DateRange
+
+note right of ITransactionRepository
+  **Dependency Inversion Principle**
+  Alta dependência de abstrações,
+  não de implementações concretas
+end note
+
+note right of AutoCategorizer
+  **Strategy Pattern**
+  Permite trocar algoritmos de
+  categorização em tempo de execução
+end note
+
+note right of TransactionFactory
+  **Singleton + Factory Pattern**
+  Centraliza criação de objetos
+  e garante instância única
+end note
+
+note right of BudgetMonitor
+  **Observer Pattern**
+  Notifica múltiplos observadores
+  sobre mudanças de estado
+end note
+
+note right of CachedTransactionRepository
+  **Decorator Pattern**
+  Adiciona funcionalidade de cache
+  sem modificar o repository original
+end note
+
+note left of BaseTransaction
+  **Liskov Substitution Principle**
+  Subclasses podem substituir
+  classe base sem quebrar código
+end note
+
+@enduml

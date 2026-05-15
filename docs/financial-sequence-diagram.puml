@@ -1,0 +1,180 @@
+@startuml Diagrama de Sequência - Registro de Transação Financeira
+
+actor "Usuário" as User
+participant "UI Component\nTransactionManager" as UI
+participant "FinancialService" as Service
+participant "TransactionValidator" as Validator
+participant "AutoCategorizer" as Categorizer
+participant "TransactionFactory" as Factory
+participant "ITransactionRepository" as Repo
+participant "BudgetMonitor" as Monitor
+participant "IAlertObserver" as Observer
+database "Supabase" as DB
+
+== Fase 1: Entrada de Dados ==
+
+User -> UI : Preenche formulário\nde transação
+activate UI
+
+UI -> UI : handleChange()
+note right
+  Atualiza estado local
+  com dados do formulário
+end note
+
+User -> UI : Clica em "Salvar"
+UI -> UI : handleSubmit()
+
+== Fase 2: Validação (Single Responsibility) ==
+
+UI -> Validator : validate(transactionData)
+activate Validator
+
+Validator -> Validator : defineRules()
+note right
+  **Strategy Pattern**
+  Define regras específicas
+  para tipo de transação
+end note
+
+Validator -> Validator : checkRule(rule, data)
+loop Para cada regra
+  Validator -> Validator : validateAmount()
+  Validator -> Validator : validateDate()
+  Validator -> Validator : validateCategory()
+end
+
+alt Validação Falha
+  Validator --> UI : ValidationResult(false, errors)
+  UI -> User : Exibe toast de erro
+  deactivate Validator
+  deactivate UI
+else Validação Sucesso
+  Validator --> UI : ValidationResult(true)
+  deactivate Validator
+  
+  == Fase 3: Processamento (Factory + Strategy) ==
+  
+  UI -> Service : addTransaction(transactionData)
+  activate Service
+  
+  Service -> Categorizer : categorizeTransaction(data)
+  activate Categorizer
+  
+  Categorizer -> Categorizer : getStrategy(type)
+  note right
+    **Strategy Pattern**
+    Seleciona estratégia baseada
+    no tipo (Income/Expense)
+  end note
+  
+  alt Expense
+    Categorizer -> Categorizer : ExpenseCategoryStrategy
+  else Income
+    Categorizer -> Categorizer : IncomeCategoryStrategy
+  end
+  
+  Categorizer -> Categorizer : categorize()
+  Categorizer --> Service : category, subcategory
+  deactivate Categorizer
+  
+  Service -> Factory : createTransaction(type, enrichedData)
+  activate Factory
+  
+  Factory -> Factory : getInstance()
+  note right
+    **Singleton Pattern**
+    Garante instância única
+  end note
+  
+  alt Type = "income"
+    Factory -> Factory : createIncome(data)
+    create Income
+    Factory -> Income : new Income(data)
+  else Type = "expense"
+    Factory -> Factory : createExpense(data)
+    create Expense
+    Factory -> Expense : new Expense(data)
+  end
+  
+  Factory --> Service : transaction: BaseTransaction
+  deactivate Factory
+  
+  == Fase 4: Persistência (Repository Pattern) ==
+  
+  Service -> Repo : create(transaction)
+  activate Repo
+  
+  note right of Repo
+    **Decorator Pattern**
+    Pode ser wrapped com:
+    - CachedRepository
+    - LoggedRepository
+  end note
+  
+  Repo -> Repo : mapToDatabase(transaction)
+  Repo -> DB : INSERT INTO financial_transactions
+  activate DB
+  
+  DB --> Repo : Registro criado
+  deactivate DB
+  
+  Repo -> Repo : mapToEntity(dbData)
+  Repo --> Service : savedTransaction
+  deactivate Repo
+  
+  == Fase 5: Monitoramento (Observer Pattern) ==
+  
+  Service -> Monitor : checkBudgetLimits()
+  activate Monitor
+  
+  Monitor -> Monitor : evaluateSpending(budget)
+  
+  alt Limite Ultrapassado
+    Monitor -> Monitor : notifyObservers(alert)
+    
+    loop Para cada Observer
+      Monitor -> Observer : update(alert)
+      activate Observer
+      
+      alt EmailAlertObserver
+        Observer -> Observer : sendEmail(alert)
+      else NotificationAlertObserver
+        Observer -> Observer : showNotification(alert)
+      end
+      
+      Observer --> Monitor : Notificação enviada
+      deactivate Observer
+    end
+  end
+  
+  Monitor --> Service : Monitoramento completo
+  deactivate Monitor
+  
+  Service --> UI : savedTransaction
+  deactivate Service
+  
+  == Fase 6: Atualização da Interface ==
+  
+  UI -> UI : resetForm()
+  UI -> UI : invalidateQueries()
+  note right
+    Atualiza cache do React Query
+    para refletir nova transação
+  end note
+  
+  UI -> User : Toast de sucesso
+  UI -> UI : Re-renderiza lista
+  deactivate UI
+end
+
+== Fluxo Alternativo: Erro de Conexão ==
+
+group Erro de Rede
+  DB --> Repo : Erro de conexão
+  Repo --> Service : Error
+  Service --> UI : Error
+  UI -> User : Toast: "Erro ao salvar.\nVerifique sua conexão"
+end
+
+@enduml

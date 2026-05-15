@@ -1,0 +1,321 @@
+@startuml Sistema ARGOM - Modelo de Banco de Dados (v3.1)
+
+' Schema real do Supabase com constraints, indices e triggers
+
+skinparam linetype ortho
+
+entity "farms" {
+    * id : UUID <<PK>> DEFAULT gen_random_uuid()
+    --
+    * user_id : UUID NOT NULL
+    * name : TEXT NOT NULL
+    description : TEXT
+    location : TEXT
+    size_hectares : NUMERIC(10,2)
+    * created_at : TIMESTAMPTZ DEFAULT now()
+    * updated_at : TIMESTAMPTZ DEFAULT now()
+    --
+    <<INDEX>> idx_farms_user_id (user_id)
+    <<TRIGGER>> set_farms_updated_at
+    <<TRIGGER>> audit_farms_trigger
+}
+
+entity "profiles" {
+    * id : UUID <<PK>> DEFAULT gen_random_uuid()
+    --
+    * user_id : UUID NOT NULL UNIQUE
+    full_name : TEXT
+    avatar_url : TEXT
+    company : TEXT
+    deleted_at : TIMESTAMPTZ
+    * created_at : TIMESTAMPTZ DEFAULT now()
+    * updated_at : TIMESTAMPTZ DEFAULT now()
+    --
+    <<INDEX>> idx_profiles_user_id (user_id)
+    <<TRIGGER>> set_profiles_updated_at
+    <<TRIGGER>> audit_profiles_trigger
+}
+
+entity "financial_transactions" {
+    * id : UUID <<PK>> DEFAULT gen_random_uuid()
+    --
+    * user_id : UUID NOT NULL
+    farm_id : UUID <<FK>>
+    * type : TEXT NOT NULL
+    ..VALIDATE: type IN ('income', 'expense')..
+    * amount : NUMERIC NOT NULL
+    ..VALIDATE: amount > 0..
+    * category : TEXT NOT NULL
+    ..VALIDATE: category NOT empty..
+    subcategory : TEXT
+    description : TEXT
+    * transaction_date : DATE DEFAULT CURRENT_DATE
+    * status : TEXT NOT NULL DEFAULT 'completed'
+    payment_method : TEXT
+    reference_number : TEXT
+    tags : TEXT[]
+    * created_at : TIMESTAMPTZ DEFAULT now()
+    * updated_at : TIMESTAMPTZ DEFAULT now()
+    --
+    <<INDEX>> idx_fin_tx_user_date (user_id, transaction_date DESC)
+    <<INDEX>> idx_fin_tx_user_type_date (user_id, type, transaction_date DESC)
+    <<INDEX>> idx_fin_tx_user_category (user_id, category)
+    <<INDEX>> idx_fin_tx_user_status (user_id, status)
+    <<TRIGGER>> validate_financial_transaction
+    <<TRIGGER>> set_updated_at
+    <<TRIGGER>> audit_trigger
+}
+
+entity "tasks" {
+    * id : UUID <<PK>> DEFAULT gen_random_uuid()
+    --
+    * user_id : UUID NOT NULL
+    farm_id : UUID <<FK>>
+    * title : TEXT NOT NULL
+    ..VALIDATE: title NOT empty..
+    description : TEXT
+    * priority : TEXT NOT NULL DEFAULT 'medium'
+    ..VALIDATE: IN ('low', 'medium', 'high')..
+    * status : TEXT NOT NULL DEFAULT 'pending'
+    ..VALIDATE: IN ('pending', 'in_progress', 'completed')..
+    category : TEXT
+    due_date : DATE
+    assigned_to : TEXT
+    completed_at : TIMESTAMPTZ
+    ..AUTO: set on status='completed'..
+    * created_at : TIMESTAMPTZ DEFAULT now()
+    * updated_at : TIMESTAMPTZ DEFAULT now()
+    --
+    <<INDEX>> idx_tasks_user_status (user_id, status)
+    <<INDEX>> idx_tasks_user_priority (user_id, priority)
+    <<INDEX>> idx_tasks_user_due_date (user_id, due_date)
+    <<INDEX>> idx_tasks_user_category (user_id, category)
+    <<TRIGGER>> validate_task
+    <<TRIGGER>> set_updated_at
+    <<TRIGGER>> audit_trigger
+}
+
+entity "sensors" {
+    * id : UUID <<PK>> DEFAULT gen_random_uuid()
+    --
+    * farm_id : UUID <<FK>> NOT NULL
+    * name : TEXT NOT NULL
+    ..VALIDATE: name NOT empty..
+    * type : TEXT NOT NULL
+    ..VALIDATE: type NOT empty..
+    value : NUMERIC
+    unit : TEXT
+    location : TEXT
+    last_reading : TIMESTAMPTZ DEFAULT now()
+    * created_at : TIMESTAMPTZ DEFAULT now()
+    --
+    <<INDEX>> idx_sensors_farm_id (farm_id)
+    <<INDEX>> idx_sensors_farm_type (farm_id, type)
+    <<TRIGGER>> validate_sensor
+    <<TRIGGER>> audit_trigger
+}
+
+entity "budgets" {
+    * id : UUID <<PK>> DEFAULT gen_random_uuid()
+    --
+    * user_id : UUID NOT NULL
+    farm_id : UUID <<FK>>
+    * category : TEXT NOT NULL
+    subcategory : TEXT
+    * amount : NUMERIC NOT NULL
+    ..VALIDATE: amount > 0..
+    * period : TEXT NOT NULL
+    * start_date : DATE NOT NULL
+    * end_date : DATE NOT NULL
+    ..VALIDATE: end_date > start_date..
+    alert_threshold : NUMERIC DEFAULT 80.00
+    * created_at : TIMESTAMPTZ DEFAULT now()
+    * updated_at : TIMESTAMPTZ DEFAULT now()
+    --
+    <<INDEX>> idx_budgets_user_period (user_id, period)
+    <<INDEX>> idx_budgets_user_category (user_id, category)
+    <<TRIGGER>> validate_budget
+    <<TRIGGER>> set_updated_at
+    <<TRIGGER>> audit_trigger
+}
+
+entity "equipment" {
+    * id : UUID <<PK>> DEFAULT gen_random_uuid()
+    --
+    * user_id : UUID NOT NULL
+    farm_id : UUID <<FK>>
+    * name : TEXT NOT NULL
+    ..VALIDATE: name NOT empty..
+    * type : TEXT NOT NULL DEFAULT 'outro'
+    ..VALIDATE: IN ('tractor', 'irrigacao', 'drone',..
+    ..'colheitadeira', 'caminhao', 'pulverizador', 'outro')..
+    * status : TEXT NOT NULL DEFAULT 'active'
+    ..VALIDATE: IN ('active', 'maintenance', 'offline', 'retired')..
+    location : TEXT
+    model : TEXT
+    manufacturer : TEXT
+    serial_number : TEXT
+    purchase_date : DATE
+    purchase_value : NUMERIC(12,2)
+    hours_used : NUMERIC(10,1) DEFAULT 0
+    ..VALIDATE: hours_used >= 0..
+    last_maintenance : DATE
+    next_maintenance : DATE
+    notes : TEXT
+    * created_at : TIMESTAMPTZ DEFAULT now()
+    * updated_at : TIMESTAMPTZ DEFAULT now()
+    --
+    <<INDEX>> idx_equipment_user_id (user_id)
+    <<INDEX>> idx_equipment_user_status (user_id, status)
+    <<INDEX>> idx_equipment_farm_id (farm_id)
+    <<INDEX>> idx_equipment_next_maint (next_maintenance)
+    <<TRIGGER>> validate_equipment
+    <<TRIGGER>> set_updated_at
+    <<TRIGGER>> audit_trigger
+}
+
+entity "alerts" {
+    * id : UUID <<PK>> DEFAULT gen_random_uuid()
+    --
+    * user_id : UUID NOT NULL
+    farm_id : UUID <<FK>>
+    sensor_id : UUID <<FK>>
+    * type : TEXT NOT NULL DEFAULT 'info'
+    ..VALIDATE: IN ('info', 'warning', 'critical',..
+    ..'weather', 'sensor', 'maintenance', 'financial')..
+    * severity : TEXT NOT NULL DEFAULT 'low'
+    ..VALIDATE: IN ('low', 'medium', 'high', 'critical')..
+    * title : TEXT NOT NULL
+    ..VALIDATE: title NOT empty..
+    message : TEXT
+    * is_read : BOOLEAN DEFAULT false
+    * is_resolved : BOOLEAN DEFAULT false
+    resolved_at : TIMESTAMPTZ
+    resolved_by : UUID
+    metadata : JSONB
+    * created_at : TIMESTAMPTZ DEFAULT now()
+    --
+    <<INDEX>> idx_alerts_user_id (user_id)
+    <<INDEX>> idx_alerts_user_read (user_id, is_read)
+    <<INDEX>> idx_alerts_user_severity (user_id, severity)
+    <<INDEX>> idx_alerts_created (created_at DESC)
+    <<TRIGGER>> validate_alert
+    <<TRIGGER>> audit_trigger
+}
+
+entity "crop_fields" {
+    * id : UUID <<PK>> DEFAULT gen_random_uuid()
+    --
+    * user_id : UUID NOT NULL
+    farm_id : UUID <<FK>>
+    * name : TEXT NOT NULL
+    ..VALIDATE: name NOT empty..
+    * crop_type : TEXT NOT NULL
+    ..VALIDATE: crop_type NOT empty..
+    area_hectares : NUMERIC(10,2)
+    ..VALIDATE: area > 0..
+    * status : TEXT NOT NULL DEFAULT 'planejado'
+    ..VALIDATE: IN ('planejado', 'plantado', 'crescimento',..
+    ..'floracao', 'frutificacao', 'colheita', 'pos_colheita')..
+    planting_date : DATE
+    expected_harvest_date : DATE
+    actual_harvest_date : DATE
+    expected_yield_kg : NUMERIC(12,2)
+    actual_yield_kg : NUMERIC(12,2)
+    soil_type : TEXT
+    irrigation_type : TEXT
+    notes : TEXT
+    * created_at : TIMESTAMPTZ DEFAULT now()
+    * updated_at : TIMESTAMPTZ DEFAULT now()
+    --
+    <<INDEX>> idx_crop_fields_user_id (user_id)
+    <<INDEX>> idx_crop_fields_farm_id (farm_id)
+    <<INDEX>> idx_crop_fields_user_status (user_id, status)
+    <<TRIGGER>> validate_crop_field
+    <<TRIGGER>> set_updated_at
+    <<TRIGGER>> audit_trigger
+}
+
+entity "audit_logs" {
+    * id : UUID <<PK>> DEFAULT gen_random_uuid()
+    --
+    * user_id : UUID NOT NULL
+    * action : TEXT NOT NULL
+    * table_name : TEXT NOT NULL
+    record_id : UUID
+    old_data : JSONB
+    new_data : JSONB
+    ip_address : TEXT
+    user_agent : TEXT
+    * created_at : TIMESTAMPTZ DEFAULT now()
+    --
+    <<INDEX>> idx_audit_user_id (user_id)
+    <<INDEX>> idx_audit_created_at (created_at)
+}
+
+entity "user_roles" {
+    * id : UUID <<PK>> DEFAULT gen_random_uuid()
+    --
+    * user_id : UUID NOT NULL
+    * role : app_role DEFAULT 'user'
+    * created_at : TIMESTAMPTZ DEFAULT now()
+}
+
+enum app_role {
+    admin
+    user
+    manager
+}
+
+' Relacionamentos
+farms ||--o{ financial_transactions : "farm_id"
+farms ||--o{ tasks : "farm_id"
+farms ||--o{ sensors : "farm_id"
+farms ||--o{ budgets : "farm_id"
+farms ||--o{ equipment : "farm_id"
+farms ||--o{ alerts : "farm_id"
+farms ||--o{ crop_fields : "farm_id"
+
+sensors ||--o{ alerts : "sensor_id"
+
+user_roles --> app_role : uses
+
+note right of financial_transactions
+  **Integridade v3.1**
+  - Validacao server-side via trigger
+  - Indices compostos para consultas
+  - NOT NULL em campos criticos
+  - Defaults seguros
+end note
+
+note right of equipment
+  **Novo na v3.1**
+  - Controle de manutencao
+  - Horas de uso
+  - Valor de compra
+  - Tipos validados
+end note
+
+note right of alerts
+  **Novo na v3.1**
+  - Tipos: info, warning, critical,
+    weather, sensor, maintenance, financial
+  - Severidade: low, medium, high, critical
+  - Integracao com sensores
+end note
+
+note right of crop_fields
+  **Novo na v3.1**
+  - Ciclo completo de producao
+  - Rendimento esperado vs real
+  - Tipo de solo e irrigacao
+end note
+
+note bottom of audit_logs
+  **Auditoria**
+  Registra todas as operacoes
+  via audit_trigger_function()
+  Compativel com signup (fallback user_id)
+end note
+
+@enduml

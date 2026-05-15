@@ -1,0 +1,101 @@
+@startuml Sistema de Gestão Agrícola - Componentes UI
+
+abstract class UIComponent {
+    +props: ComponentProps
+    +className: string
+    +render(): ReactElement
+}
+
+class Card {
+    +title: string
+    +content: ReactNode
+    +variant: CardVariant
+}
+
+class MetricCard {
+    +title: string
+    +value: number
+    +trend: number
+    +icon: IconType
+    +formatValue(): string
+}
+
+class DataTable {
+    +data: TableData[]
+    +columns: Column[]
+    +sorting: SortConfig
+    +pagination: PaginationConfig
+    +onSort(column: string): void
+    +onFilter(filters: Filter[]): void
+}
+
+class ProgressIndicator {
+    +value: number
+    +max: number
+    +variant: ProgressVariant
+    +showLabel: boolean
+    +animate(): void
+}
+
+class StatusBadge {
+    +status: Status
+    +variant: BadgeVariant
+    +size: BadgeSize
+}
+
+class Button {
+    +variant: ButtonVariant
+    +size: ButtonSize
+    +disabled: boolean
+    +onClick: Function
+}
+
+class Input {
+    +variant: InputVariant
+    +icon: IconType
+    +error: string
+    +success: string
+    +validate(): boolean
+}
+
+class Tooltip {
+    +content: string
+    +variant: TooltipVariant
+    +position: Position
+}
+
+enum CardVariant {
+    DEFAULT
+    OUTLINED
+    ELEVATED
+}
+
+enum ButtonVariant {
+    DEFAULT
+    DESTRUCTIVE
+    OUTLINE
+    SECONDARY
+    GHOST
+    LINK
+}
+
+enum ProgressVariant {
+    DEFAULT
+    SECONDARY
+    SUCCESS
+    WARNING
+    DESTRUCTIVE
+}
+
+UIComponent <|-- Card
+UIComponent <|-- MetricCard
+UIComponent <|-- DataTable
+UIComponent <|-- ProgressIndicator
+UIComponent <|-- StatusBadge
+UIComponent <|-- Button
+UIComponent <|-- Input
+UIComponent <|-- Tooltip
+
+Card <|-- MetricCard
+
+@enduml

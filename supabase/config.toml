@@ -1,0 +1,13 @@
+project_id = "cfcnuemvftiphexvjhvv"
+
+[functions.financial-insights]
+verify_jwt = false
+
+[functions.ai-chat]
+verify_jwt = false
+
+[functions.weather]
+verify_jwt = false
+
+[functions.commodities]
+verify_jwt = false

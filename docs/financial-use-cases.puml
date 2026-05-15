@@ -1,0 +1,96 @@
+@startuml Diagrama de Casos de Uso - Módulo Financeiro
+
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Usuário\nProdutor" as User
+actor "Sistema\nExterno" as External
+
+rectangle "Sistema de Gestão Financeira Agrícola" {
+  
+  package "Gestão de Transações" {
+    usecase "Registrar Transação" as UC1
+    usecase "Editar Transação" as UC2
+    usecase "Excluir Transação" as UC3
+    usecase "Consultar Transações" as UC4
+    usecase "Validar Dados" as UC1_1
+    usecase "Categorizar\nAutomaticamente" as UC1_2
+  }
+  
+  package "Análise Financeira" {
+    usecase "Visualizar Dashboard" as UC5
+    usecase "Gerar Relatórios" as UC6
+    usecase "Analisar Rentabilidade" as UC7
+    usecase "Comparar Culturas" as UC8
+    usecase "Calcular Métricas" as UC5_1
+    usecase "Aplicar Filtros" as UC5_2
+  }
+  
+  package "Planejamento" {
+    usecase "Criar Orçamento" as UC9
+    usecase "Monitorar Gastos" as UC10
+    usecase "Definir Alertas" as UC11
+    usecase "Exportar Dados" as UC12
+    usecase "Notificar Limite" as UC11_1
+  }
+  
+  package "Fluxo de Caixa" {
+    usecase "Projetar Fluxo" as UC13
+    usecase "Analisar Tendências" as UC14
+    usecase "Identificar Riscos" as UC15
+  }
+}
+
+' Relacionamentos Usuário
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
+User --> UC5
+User --> UC6
+User --> UC7
+User --> UC8
+User --> UC9
+User --> UC10
+User --> UC11
+User --> UC12
+User --> UC13
+User --> UC14
+User --> UC15
+
+' Extends
+UC1 .> UC1_1 : <<extend>>
+UC1 .> UC1_2 : <<extend>>
+UC5 .> UC5_1 : <<extend>>
+UC5 .> UC5_2 : <<extend>>
+UC11 .> UC11_1 : <<extend>>
+
+' Includes
+UC6 ..> UC4 : <<include>>
+UC7 ..> UC4 : <<include>>
+UC8 ..> UC7 : <<include>>
+UC10 ..> UC9 : <<include>>
+UC14 ..> UC13 : <<include>>
+
+' Sistema Externo
+UC12 --> External
+UC11_1 --> External
+
+note right of UC1
+  Aplicação do padrão Strategy
+  para diferentes tipos de
+  validação e categorização
+end note
+
+note right of UC5
+  Padrão Observer para
+  atualizações em tempo real
+  das métricas
+end note
+
+note right of UC11
+  Padrão Chain of Responsibility
+  para processamento de alertas
+end note
+
+@enduml

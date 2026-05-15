@@ -1,0 +1,54 @@
+@startuml Sistema de Gestão Agrícola - Fluxo de Dados
+
+actor Usuario as "Usuário"
+participant UI as "Interface do Usuário"
+participant State as "Gerenciamento de Estado"
+participant Cache as "Cache Manager"
+participant API as "API Service"
+participant Mock as "Mock Data Service"
+
+== Inicialização da Aplicação ==
+Usuario -> UI : Acessa Dashboard
+UI -> State : Solicita dados iniciais
+State -> Cache : Verifica cache
+alt Cache vazio
+    Cache -> API : Busca dados
+    API -> Mock : Gera dados mock
+    Mock -> API : Retorna dados
+    API -> Cache : Armazena no cache
+end
+Cache -> State : Retorna dados
+State -> UI : Atualiza componentes
+UI -> Usuario : Exibe dashboard
+
+== Interação do Usuário ==
+Usuario -> UI : Clica em métrica
+UI -> State : Atualiza estado local
+State -> UI : Re-renderiza componente
+
+== Atualização Automática ==
+loop A cada 30 segundos
+    State -> API : Busca dados atualizados
+    API -> Mock : Gera novos dados
+    Mock -> API : Retorna dados
+    API -> Cache : Atualiza cache
+    Cache -> State : Notifica mudanças
+    State -> UI : Atualiza componentes
+    UI -> Usuario : Mostra dados atuais
+end
+
+== Gerenciamento de Tarefas ==
+Usuario -> UI : Adiciona nova tarefa
+UI -> State : Valida e processa
+State -> Cache : Salva localmente
+Cache -> State : Confirma salvamento
+State -> UI : Atualiza lista de tarefas
+UI -> Usuario : Mostra confirmação
+
+== Tratamento de Erros ==
+API -> Cache : Erro na requisição
+Cache -> State : Notifica erro
+State -> UI : Exibe mensagem de erro
+UI -> Usuario : Mostra toast de erro
+
+@enduml

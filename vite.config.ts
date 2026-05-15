@@ -1,0 +1,28 @@
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react-swc";
+import path from "path";
+
+export default defineConfig({
+  server: { host: "::", port: 8080 },
+  plugins: [react()],
+  resolve: { alias: { "@": path.resolve(__dirname, "./src") } },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-react":   ["react", "react-dom", "react-router-dom"],
+          "vendor-supabase":["@supabase/supabase-js"],
+          "vendor-query":   ["@tanstack/react-query"],
+          "vendor-icons":   ["lucide-react"],
+          "vendor-forms":   ["react-hook-form", "zod", "@hookform/resolvers"],
+          "vendor-pdf":     ["jspdf"],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 800,
+    target: "esnext",
+    minify: "esbuild",
+  },
+});
+
+// já declarado — apenas confirmando que Reports usa chunk separado automaticamente pelo lazy()

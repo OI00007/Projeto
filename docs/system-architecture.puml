@@ -1,0 +1,201 @@
+@startuml Sistema ARGOM - Arquitetura do Sistema (v3.0)
+
+package "Presentation Layer" {
+    class App {
+        +queryClient: QueryClient
+        +render(): ReactElement
+    }
+
+    class ErrorBoundary {
+        -hasError: boolean
+        -error: Error
+        +getDerivedStateFromError(): State
+        +componentDidCatch(): void
+        +handleReset(): void
+        +render(): ReactNode
+    }
+
+    class AnimatedRoutes {
+        +location: Location
+        +render(): ReactElement
+    }
+
+    class Router {
+        +routes: Route[]
+        +navigate(path: string): void
+    }
+
+    class PageLoader {
+        +render(): ReactElement
+    }
+
+    package "Pages" {
+        class DashboardPage
+        class MonitoringPage
+        class FinancialPage
+        class EquipmentPage
+        class TasksPage
+        class AIInsightsPage
+        class ProfilePage
+    }
+
+    package "Components" {
+        package "Dashboard Components" {
+            class WeatherWidget
+            class ProductionOverview
+            class MachineryStatus
+            class InventoryManagement
+            class TaskManager
+            class DashboardMetrics
+        }
+
+        package "Financial Components" {
+            class TransactionManager
+            class BudgetPlanner
+            class CashFlowAnalysis
+            class FinancialInsights
+            class ProfitabilityAnalysis
+        }
+
+        package "UI Components" {
+            class Button
+            class Card
+            class DataTable
+            class AnimatedButton
+            class AnimatedCard
+            class MetricCard
+            class StatCard
+        }
+
+        package "Infrastructure" {
+            class ProtectedRoute
+            class AIChatAssistant
+            class SEOHead
+        }
+    }
+}
+
+package "State Management Layer" {
+    class AuthProvider {
+        -user: AuthUser
+        -session: Session
+        -loading: boolean
+        +signOut(): Promise<void>
+    }
+
+    class FarmDataProvider {
+        -sensors: SensorReading[]
+        -zones: Zone[]
+        -weather: WeatherData
+        -financialData: FinancialData
+        -transactions: Transaction[]
+        +updateSensor(): void
+    }
+
+    class QueryClientProvider {
+        -staleTime: 300000
+        -retry: (failureCount, error) => boolean
+        +invalidateQueries(): void
+    }
+}
+
+package "Business Logic Layer" {
+    class SecurityService {
+        +sanitizeText(): string
+        +validateInput(): ValidationResult
+        +RateLimiter: RateLimiter
+    }
+
+    class ValidationService {
+        +emailSchema: ZodSchema
+        +passwordSchema: ZodSchema
+        +transactionSchema: ZodSchema
+    }
+
+    class Constants {
+        +ROUTES: Record
+        +SENSOR_THRESHOLDS: Record
+        +ERROR_MESSAGES: Record
+    }
+}
+
+package "Data Access Layer" {
+    class SupabaseClient {
+        +auth: AuthClient
+        +from(table): QueryBuilder
+        +channel(name): RealtimeChannel
+        +functions: FunctionsClient
+    }
+
+    package "Edge Functions" {
+        class AIChatFunction
+        class WeatherFunction
+        class FinancialInsightsFunction
+    }
+
+    database "PostgreSQL (Supabase)" {
+        entity farms
+        entity financial_transactions
+        entity tasks
+        entity sensors
+        entity profiles
+        entity budgets
+        entity audit_logs
+        entity user_roles
+    }
+}
+
+' Relationships
+App *-- ErrorBoundary
+ErrorBoundary *-- AnimatedRoutes
+AnimatedRoutes --> Router
+AnimatedRoutes --> PageLoader
+
+App *-- QueryClientProvider
+App *-- AuthProvider
+App *-- FarmDataProvider
+
+Router --> DashboardPage
+Router --> FinancialPage
+Router --> MonitoringPage
+Router --> TasksPage
+Router --> AIInsightsPage
+
+DashboardPage --> DashboardMetrics
+DashboardPage --> WeatherWidget
+DashboardPage --> TaskManager
+DashboardPage --> InventoryManagement
+
+FinancialPage --> TransactionManager
+FinancialPage --> BudgetPlanner
+FinancialPage --> CashFlowAnalysis
+
+AuthProvider --> SupabaseClient
+FarmDataProvider --> SupabaseClient
+SupabaseClient --> AIChatFunction
+SupabaseClient --> WeatherFunction
+SupabaseClient --> FinancialInsightsFunction
+
+ProtectedRoute --> AuthProvider
+
+note right of ErrorBoundary
+  **Resiliência**
+  Captura erros de renderização
+  e exibe fallback amigável
+end note
+
+note right of QueryClientProvider
+  **Retry Inteligente**
+  Ignora 401/403 (auth errors)
+  Max 2 retries para outros erros
+  StaleTime: 5 minutos
+end note
+
+note right of FarmDataProvider
+  **Realtime**
+  Subscrição Supabase para
+  atualizações de sensores
+  em tempo real
+end note
+
+@enduml
