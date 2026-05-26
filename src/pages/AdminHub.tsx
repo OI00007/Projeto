@@ -50,8 +50,8 @@ const AdminHub = () => {
 
   // Simulated data for now, ideally fetched from Supabase `subscriptions` and `metrics`
   const [currentPlan, setCurrentPlan] = useState<PlanTier>('basic');
-  const [currentAdmins, setCurrentAdmins] = useState(1);
-  const [currentSensors, setCurrentSensors] = useState(3);
+  const currentAdmins = 1;
+  const currentSensors = 3;
   const [isChangingPlan, setIsChangingPlan] = useState(false);
 
   const planInfo = PLAN_LIMITS[currentPlan];

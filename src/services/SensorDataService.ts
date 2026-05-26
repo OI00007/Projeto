@@ -57,7 +57,7 @@ function mapRawSensor(s: Record<string, unknown>): Sensor {
     unit:        s.unit ? String(s.unit) : "",
     location:    s.location ? String(s.location) : "Principal",
     lastReading: new Date(s.last_reading ? String(s.last_reading) : Date.now()),
-    farmId:      s.farm_id ? String(s.farm_id) : undefined,
+    farmId:      s.farm_id ? String(s.farm_id) : "",
   };
 }
 

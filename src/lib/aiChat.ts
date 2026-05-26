@@ -76,7 +76,7 @@ DADOS DA FAZENDA: Sensores: ${JSON.stringify(ctx.sensors.slice(0,6))}. Financeir
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "Content-Type":"application/json", "x-api-key":apiKey, "anthropic-version":"2023-06-01" },
-        body: JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:1024, system, messages:[...history.slice(-8).map(m=>({role:m.role,content:m.content})),{role:"user",content:message}] }),
+        body: JSON.stringify({ model:"claude-haiku-3-5-20241022", max_tokens:1024, system, messages:[...history.slice(-8).map(m=>({role:m.role,content:m.content})),{role:"user",content:message}] }),
       });
       if (!res.ok) throw new Error(`API ${res.status}`);
       const data = await res.json();

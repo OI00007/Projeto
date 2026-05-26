@@ -1,22 +1,21 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { getCurrentHarvestYear } from "@/lib/dateTime";
-import { 
-  BarChart3, 
-  MonitorSpeaker, 
-  DollarSign, 
-  Brain, 
-  Wrench, 
-  Calculator, 
+import {
+  BarChart3,
+  MonitorSpeaker,
+  DollarSign,
+  Brain,
+  Wrench,
+  Calculator,
   Truck,
   Map,
   Sprout,
   CircleDot,
   LogOut,
-  User,
   Settings,
   ListTodo,
-  FileText
+  FileText,
 } from "lucide-react";
 import {
   Sidebar,
@@ -37,71 +36,71 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
-  { 
-    title: "Dashboard", 
-    url: "/dashboard", 
+  {
+    title: "Dashboard",
+    url: "/dashboard",
     icon: BarChart3,
-    description: "Visão geral" 
+    description: "Visão geral",
   },
-  { 
-    title: "Monitoramento", 
-    url: "/monitoring", 
+  {
+    title: "Monitoramento",
+    url: "/monitoring",
     icon: MonitorSpeaker,
-    description: "Tempo real" 
+    description: "Tempo real",
   },
-  { 
-    title: "💰 Financeiro", 
-    url: "/financial", 
+  {
+    title: "Financeiro",
+    url: "/financial",
     icon: DollarSign,
-    description: "PRIORITÁRIO - Receitas e custos" 
+    description: "Receitas e custos",
   },
-  { 
-    title: "Tarefas", 
-    url: "/tasks", 
+  {
+    title: "Tarefas",
+    url: "/tasks",
     icon: ListTodo,
-    description: "Gestão de atividades" 
+    description: "Gestão de atividades",
   },
-  { 
-    title: "Relatórios", 
-    url: "/reports", 
+  {
+    title: "Relatórios",
+    url: "/reports",
     icon: FileText,
-    description: "Gerar e baixar PDFs" 
+    description: "Gerar e baixar PDFs",
   },
-  { 
-    title: "IA & Insights", 
-    url: "/ai-insights", 
+  {
+    title: "IA & Insights",
+    url: "/ai-insights",
     icon: Brain,
-    description: "Análises inteligentes" 
+    description: "Análises inteligentes",
   },
-  { 
-    title: "Equipamentos", 
-    url: "/equipment", 
+  {
+    title: "Equipamentos",
+    url: "/equipment",
     icon: Wrench,
-    description: "Gestão de máquinas" 
+    description: "Gestão de máquinas",
   },
-  { 
-    title: "Custos/Talhão", 
-    url: "/costs-fields", 
+  {
+    title: "Custos/Talhão",
+    url: "/costs-fields",
     icon: Calculator,
-    description: "Análise por área" 
+    description: "Análise por área",
   },
-  { 
-    title: "Frotas", 
-    url: "/fleet", 
+  {
+    title: "Frotas",
+    url: "/fleet",
     icon: Truck,
-    description: "Veículos e logística" 
+    description: "Veículos e logística",
   },
-  { 
-    title: "Mapa do Sistema", 
-    url: "/sitemap", 
+  {
+    title: "Mapa do Sistema",
+    url: "/sitemap",
     icon: Map,
-    description: "Visão geral dos módulos" 
+    description: "Visão geral dos módulos",
   },
-  { 
-    title: "Planos & Admin", 
-    url: "/admin", 
+  {
+    title: "Planos & Admin",
+    url: "/admin",
     icon: Settings,
-    description: "Gestão de assinaturas" 
+    description: "Gestão de assinaturas",
   },
 ];
 
@@ -113,9 +112,9 @@ export function AppSidebar() {
   const { user, signOut } = useAuth();
 
   const isOwner = !!user?.user_metadata?.cpf;
-  
-  const filteredMenuItems = menuItems.filter(item => {
-    if (item.url === '/admin' && !isOwner) return false;
+
+  const filteredMenuItems = menuItems.filter((item) => {
+    if (item.url === "/admin" && !isOwner) return false;
     return true;
   });
 
@@ -128,7 +127,12 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className={cn("transition-all duration-500 ease-out", collapsed ? "w-16" : "w-72")}>
+    <Sidebar
+      className={cn(
+        "transition-all duration-500 ease-out",
+        collapsed ? "w-16" : "w-72",
+      )}
+    >
       <SidebarContent className="custom-scrollbar">
         <div className="p-4">
           <div className="flex items-center gap-3 mb-6 group">
@@ -137,21 +141,32 @@ export function AppSidebar() {
             </div>
             {!collapsed && (
               <div className="entrance-fade">
-                <h2 className="text-xl font-bold text-gradient tracking-tight">Argom</h2>
+                <h2 className="text-xl font-bold text-gradient tracking-tight">
+                  Argom
+                </h2>
                 <div className="flex items-center gap-1.5">
                   <CircleDot className="h-3 w-3 text-success animate-pulse-gentle" />
-                  <span className="text-xs text-success font-semibold">Online</span>
+                  <span className="text-xs text-success font-semibold">
+                    Online
+                  </span>
                 </div>
               </div>
             )}
           </div>
-          
+
           {!collapsed && (
             <div className="mb-6 p-4 rounded-2xl bg-gradient-to-br from-card via-card to-primary/5 border border-primary/15 shadow-soft hover:shadow-medium transition-all duration-500 hover:border-primary/25 entrance-scale">
-              <div className="text-sm font-bold text-foreground mb-1">Fazenda São João</div>
-              <div className="text-xs text-muted-foreground mb-3">300 hectares • 4 culturas</div>
+              <div className="text-sm font-bold text-foreground mb-1">
+                Fazenda São João
+              </div>
+              <div className="text-xs text-muted-foreground mb-3">
+                300 hectares • 4 culturas
+              </div>
               <div className="flex items-center justify-between">
-                <Badge variant="secondary" className="text-xs rounded-full px-3">
+                <Badge
+                  variant="secondary"
+                  className="text-xs rounded-full px-3"
+                >
                   {getCurrentHarvestYear()}
                 </Badge>
                 <div className="text-xs text-success font-semibold flex items-center gap-1">
@@ -172,25 +187,37 @@ export function AppSidebar() {
               {filteredMenuItems.map((item, index) => {
                 const active = isActive(item.url);
                 return (
-                  <SidebarMenuItem key={item.title} style={{ animationDelay: `${index * 0.05}s` }} className="entrance-fade">
-                     <SidebarMenuButton asChild>
-                       <NavLink 
-                        to={item.url} 
+                  <SidebarMenuItem
+                    key={item.title}
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                    className="entrance-fade"
+                  >
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
                         className={cn(
                           "flex items-center gap-3 p-3.5 rounded-xl transition-all duration-500 ease-out group relative overflow-hidden",
-                          active 
-                            ? "gradient-primary text-primary-foreground shadow-glow" 
-                            : "hover:bg-gradient-to-r hover:from-muted/60 hover:to-muted/40 text-muted-foreground hover:text-foreground"
+                          active
+                            ? "gradient-primary text-primary-foreground shadow-glow"
+                            : "hover:bg-gradient-to-r hover:from-muted/60 hover:to-muted/40 text-muted-foreground hover:text-foreground",
                         )}
                       >
-                        <item.icon className={cn(
-                          "h-5 w-5 flex-shrink-0 transition-all duration-500",
-                          active ? "text-primary-foreground scale-110" : "group-hover:scale-110 group-hover:text-primary"
-                        )} />
+                        <item.icon
+                          className={cn(
+                            "h-5 w-5 flex-shrink-0 transition-all duration-500",
+                            active
+                              ? "text-primary-foreground scale-110"
+                              : "group-hover:scale-110 group-hover:text-primary",
+                          )}
+                        />
                         {!collapsed && (
                           <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-sm">{item.title}</div>
-                            <div className="text-xs opacity-70 truncate">{item.description}</div>
+                            <div className="font-semibold text-sm">
+                              {item.title}
+                            </div>
+                            <div className="text-xs opacity-70 truncate">
+                              {item.description}
+                            </div>
                           </div>
                         )}
                         {active && (
@@ -208,7 +235,9 @@ export function AppSidebar() {
         {!collapsed && (
           <div className="mt-auto p-4">
             <div className="p-4 rounded-xl bg-gradient-card border border-primary/10 shadow-soft">
-              <div className="text-xs font-semibold text-foreground mb-3">Status do Sistema</div>
+              <div className="text-xs font-semibold text-foreground mb-3">
+                Status do Sistema
+              </div>
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Sensores ativos</span>
@@ -219,7 +248,9 @@ export function AppSidebar() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Sincronização</span>
-                  <span className="text-foreground font-medium">2 min atrás</span>
+                  <span className="text-foreground font-medium">
+                    2 min atrás
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Performance</span>
@@ -237,40 +268,40 @@ export function AppSidebar() {
           <div className="flex items-center gap-3 mb-4">
             <Avatar className="w-8 h-8">
               <AvatarFallback className="bg-primary text-primary-foreground text-sm">
-                {user?.email?.charAt(0).toUpperCase() || 'U'}
+                {user?.email?.charAt(0).toUpperCase() || "U"}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground truncate">
-                {user?.email || 'Usuário'}
+                {user?.email || "Usuário"}
               </p>
               <p className="text-xs text-muted-foreground">Agricultor</p>
             </div>
           </div>
         )}
-        
+
         <div className="flex flex-col gap-2">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => navigate('/profile')}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/profile")}
             className={cn(
               "transition-smooth hover:bg-gradient-card",
-              collapsed ? 'px-2' : 'w-full justify-start'
+              collapsed ? "px-2" : "w-full justify-start",
             )}
             title="Configurações"
           >
             <Settings className="w-4 h-4" />
             {!collapsed && <span className="ml-2">Configurações</span>}
           </Button>
-          
-          <Button 
-            variant="outline" 
-            size="sm" 
+
+          <Button
+            variant="outline"
+            size="sm"
             onClick={handleSignOut}
             className={cn(
               "transition-smooth hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30",
-              collapsed ? 'px-2' : 'w-full justify-start'
+              collapsed ? "px-2" : "w-full justify-start",
             )}
             title="Sair"
           >

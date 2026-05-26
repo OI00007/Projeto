@@ -134,7 +134,7 @@ export function AIChatAssistant() {
                       ? "bg-primary text-primary-foreground rounded-tr-sm"
                       : "bg-muted/60 text-foreground rounded-tl-sm"
                   )}>
-                    {m.content || <span className="flex gap-1">{[0,1,2].map(i=><span key={i} className="w-1.5 h-1.5 bg-muted-foreground/40 rounded-full animate-bounce" style={{animationDelay:`${i*0.15}s`}}/>)}</span>}
+                    {m.content || <span className="flex gap-1">{[0,1,2].map(d=><span key={`dot-${d}`} className="w-1.5 h-1.5 bg-muted-foreground/40 rounded-full animate-bounce" style={{animationDelay:`${d*0.15}s`}}/>)}</span>}
                   </div>
                 </div>
               ))}
