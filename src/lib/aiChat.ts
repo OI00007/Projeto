@@ -1,7 +1,7 @@
 /**
  * Motor de IA do Argom — responde perguntas sobre a fazenda.
  * Funciona 100% offline com respostas baseadas nos dados reais dos sensores.
- * Se VITE_ANTHROPIC_API_KEY estiver configurada, usa Claude para respostas avançadas.
+ * As respostas avançadas agora são roteadas por uma função segura do Supabase.
  */
 
 export interface FarmContext {
@@ -28,12 +28,33 @@ export interface ChatMessage {
   content: string;
 }
 
+import { supabase } from "@/integrations/supabase/client";
+
 function brl(v: number) {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
   }).format(v);
 }
+
+function buildFarmContextSummary(ctx: FarmContext): string {
+  const sensorSummary = ctx.sensors
+    .slice(0, 6)
+    .map((s) => `${s.name} (${s.type}): ${s.value}${s.unit} ${s.status}`)
+    .join("; ");
+
+  return `Fazenda com ${ctx.sensors.length} sensores, ${ctx.alerts} alerta(s). Receita: ${brl(ctx.financial.revenue)}, despesas: ${brl(ctx.financial.expenses)}, lucro: ${brl(ctx.financial.profit)}, margem: ${ctx.financial.margin}. ${ctx.harvestYear ? `Safra: ${ctx.harvestYear}.` : ""} Sensores: ${sensorSummary}.`;
+}
+
+function ensureHistoryIncludesUser(history: ChatMessage[], message: string) {
+  const normalized = history.slice(-8);
+  const last = normalized[normalized.length - 1];
+  if (!last || last.role !== "user" || last.content !== message) {
+    return [...normalized, { role: "user", content: message }];
+  }
+  return normalized;
+}
+
 function normalize(text: string) {
   return text
     .toLowerCase()
@@ -98,7 +119,18 @@ Para um plantio seguro, observe:
 • Evite áreas com sensores críticos no caminho de plantio.`;
   }
 
-  if (has(q, "praga", "pragas", "doenca", "doença", "fungo", "inseto", "nematoide")) {
+  if (
+    has(
+      q,
+      "praga",
+      "pragas",
+      "doenca",
+      "doença",
+      "fungo",
+      "inseto",
+      "nematoide",
+    )
+  ) {
     return `🐞 **Pragas e doenças**
 
 Use monitoramento visual e dados de sensores para detectar áreas críticas. Priorize inspeção em setores com umidade alta e temperaturas acima de 30°C.`;
@@ -133,46 +165,55 @@ export async function processAIMessage(
   ctx: FarmContext,
   onChunk?: (partial: string) => void,
 ): Promise<string> {
-  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY as string | undefined;
+  const session = await supabase.auth.getSession();
+  const token = session.data.session?.access_token;
 
-  if (apiKey && apiKey.trim().length > 10) {
+  const requestMessages = ensureHistoryIncludesUser(history, message);
+  const context = buildFarmContextSummary(ctx);
+
+  if (token) {
     try {
-      const system = `Você é o Argom AI, assistente agrícola. Responda em português brasileiro, de forma prática e objetiva.
-DADOS DA FAZENDA: Sensores: ${JSON.stringify(ctx.sensors.slice(0, 6))}. Financeiro: receita ${brl(ctx.financial.revenue)}, lucro ${brl(ctx.financial.profit)}, margem ${ctx.financial.margin}. Alertas: ${ctx.alerts}. ${ctx.harvestYear || ""}.`;
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
+      const { data, error } = await supabase.functions.invoke("ai-chat", {
+        body: JSON.stringify({ messages: requestMessages, context }),
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          model: "claude-haiku-3-5-20241022",
-          max_tokens: 1024,
-          system,
-          messages: [
-            ...history
-              .slice(-8)
-              .map((m) => ({ role: m.role, content: m.content })),
-            { role: "user", content: message },
-          ],
-        }),
       });
-      if (!res.ok) throw new Error(`API ${res.status}`);
-      const data = await res.json();
-      const content = data.content?.[0]?.text ?? "";
-      if (content && onChunk) {
-        let p = "";
-        for (const w of content.split(" ")) {
-          p += (p ? " " : "") + w;
-          onChunk(p);
-          await new Promise((r) => setTimeout(r, 18));
+
+      if (error) {
+        throw error;
+      }
+
+      let payload: any = data;
+      if (typeof data === "string") {
+        try {
+          payload = JSON.parse(data);
+        } catch {
+          payload = null;
         }
       }
-      return content || offlineReply(message, ctx);
+
+      const content =
+        typeof payload?.content === "string"
+          ? payload.content
+          : typeof payload?.message === "string"
+            ? payload.message
+            : (payload?.choices?.[0]?.message?.content ??
+              payload?.choices?.[0]?.content ??
+              payload?.output_text ??
+              "");
+
+      if (content) {
+        if (onChunk) onChunk(content);
+        return content;
+      }
     } catch (e) {
       if (import.meta.env.DEV)
-        console.warn("[Argom AI] API falhou, usando offline:", e);
+        console.warn(
+          "[Argom AI] Função de IA falhou, usando fallback offline:",
+          e,
+        );
     }
   }
 

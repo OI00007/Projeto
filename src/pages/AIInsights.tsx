@@ -34,12 +34,14 @@ import {
   MessageCircle,
   Copy,
   Check,
+  Star,
 } from "lucide-react";
 import { useSensorData, useFinancialData } from "@/contexts/FarmDataContext";
 import { formatCurrencyBRL } from "@/lib/formatters";
 import { getCurrentHarvestYear } from "@/lib/dateTime";
 import { processAIMessage, type FarmContext } from "@/lib/aiChat";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 interface ChatMsg {
@@ -148,6 +150,12 @@ const AIInsights = () => {
   ]);
   const [chatInput, setChatInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [chatSessionId, setChatSessionId] = useState<string | null>(null);
+  const [rating, setRating] = useState<number | null>(null);
+  const [feedback, setFeedback] = useState("");
+  const [feedbackStatus, setFeedbackStatus] = useState<
+    "idle" | "saving" | "saved"
+  >("idle");
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -213,14 +221,27 @@ const AIInsights = () => {
           content: m.content,
         }));
 
+      const sessionId = await ensureChatSession(content, ctx);
+      if (sessionId) {
+        await saveChatMessage(sessionId, "user", content);
+      }
+
       try {
-        await processAIMessage(content, history, ctx, (partial) => {
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantId ? { ...m, content: partial } : m,
-            ),
-          );
-        });
+        const assistantResponse = await processAIMessage(
+          content,
+          history,
+          ctx,
+          (partial) => {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantId ? { ...m, content: partial } : m,
+              ),
+            );
+          },
+        );
+        if (sessionId) {
+          await saveChatMessage(sessionId, "assistant", assistantResponse);
+        }
       } catch (err) {
         setMessages((prev) =>
           prev.map((m) =>
@@ -242,6 +263,80 @@ const AIInsights = () => {
       e.preventDefault();
       sendMessage();
     }
+  }
+
+  async function getCurrentUserId() {
+    const session = await supabase.auth.getSession();
+    return session.data.session?.user?.id ?? null;
+  }
+
+  async function ensureChatSession(userMessage: string, context: FarmContext) {
+    if (chatSessionId) return chatSessionId;
+
+    const userId = await getCurrentUserId();
+    if (!userId) return null;
+
+    const title =
+      userMessage.length > 100 ? `${userMessage.slice(0, 97)}...` : userMessage;
+    const { data, error } = await supabase
+      .from("ai_chat_sessions")
+      .insert({
+        user_id: userId,
+        title,
+        context: `Sensores: ${context.sensors.length}; Alertas: ${context.alerts}; Receita: ${context.financial.revenue}; Lucro: ${context.financial.profit}`,
+      })
+      .select("id")
+      .single();
+
+    if (error || !data?.id) {
+      console.warn("[Argom AI] Falha ao criar sessão de chat:", error);
+      return null;
+    }
+
+    setChatSessionId(data.id);
+    return data.id;
+  }
+
+  async function saveChatMessage(
+    sessionId: string,
+    role: "user" | "assistant" | "system",
+    content: string,
+  ) {
+    const userId = await getCurrentUserId();
+    if (!userId) return;
+
+    const { error } = await supabase.from("ai_chat_messages").insert({
+      session_id: sessionId,
+      user_id: userId,
+      role,
+      content,
+    });
+
+    if (error) {
+      console.warn("[Argom AI] Falha ao salvar mensagem de chat:", error);
+    }
+  }
+
+  async function saveFeedback() {
+    if (!chatSessionId || rating === null) return;
+    setFeedbackStatus("saving");
+
+    const { error } = await supabase
+      .from("ai_chat_sessions")
+      .update({
+        rating,
+        feedback: feedback || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", chatSessionId);
+
+    if (error) {
+      console.warn("[Argom AI] Falha ao salvar feedback:", error);
+      setFeedbackStatus("idle");
+      return;
+    }
+
+    setFeedbackStatus("saved");
   }
 
   // ── Insights dinâmicos baseados nos dados reais ──
@@ -575,6 +670,58 @@ const AIInsights = () => {
                   para responder.
                 </p>
               </div>
+            </Card>
+
+            <Card className="mt-4 border border-secondary/10">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Star className="h-4 w-4 text-amber-500" />
+                  Avaliação da conversa
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setRating(value)}
+                      className={cn(
+                        "rounded-full p-2 transition",
+                        rating === value
+                          ? "bg-amber-500 text-white"
+                          : "bg-muted hover:bg-muted/80 text-muted-foreground",
+                      )}
+                    >
+                      <Star className="h-4 w-4" />
+                    </button>
+                  ))}
+                </div>
+                <Textarea
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  placeholder="O que achou da resposta? Dê um feedback rápido..."
+                  rows={2}
+                  className="text-sm"
+                  disabled={feedbackStatus === "saving"}
+                />
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs text-muted-foreground">
+                    Sua avaliação ajuda a melhorar o assistente.
+                  </p>
+                  <Button
+                    onClick={saveFeedback}
+                    disabled={!rating || feedbackStatus === "saving"}
+                    size="sm"
+                  >
+                    {feedbackStatus === "saving"
+                      ? "Salvando..."
+                      : feedbackStatus === "saved"
+                        ? "Salvo"
+                        : "Enviar avaliação"}
+                  </Button>
+                </div>
+              </CardContent>
             </Card>
 
             {/* Mais sugestões */}
