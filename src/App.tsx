@@ -10,29 +10,32 @@ import { NetworkStatusBanner } from "@/components/feedback/NetworkStatusBanner";
 import { Suspense, lazy } from "react";
 import { DashboardShell } from "@/components/DashboardShell";
 
-const Index       = lazy(() => import("./pages/Index"));
-const Dashboard   = lazy(() => import("./pages/Dashboard"));
-const Monitoring  = lazy(() => import("./pages/Monitoring"));
-const Financial   = lazy(() => import("./pages/Financial"));
-const AIInsights  = lazy(() => import("./pages/AIInsights"));
-const Equipment   = lazy(() => import("./pages/Equipment"));
+const Index = lazy(() => import("./pages/Index"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Monitoring = lazy(() => import("./pages/Monitoring"));
+const Financial = lazy(() => import("./pages/Financial"));
+const AIInsights = lazy(() => import("./pages/AIInsights"));
+const Equipment = lazy(() => import("./pages/Equipment"));
 const CostsFields = lazy(() => import("./pages/CostsFields"));
-const Fleet       = lazy(() => import("./pages/Fleet"));
-const SiteMap     = lazy(() => import("./pages/SiteMap"));
-const Profile     = lazy(() => import("./pages/Profile"));
-const Auth        = lazy(() => import("./pages/Auth"));
-const Tasks       = lazy(() => import("./pages/Tasks"));
-const Reports     = lazy(() => import("./pages/Reports"));
-const AdminHub    = lazy(() => import("./pages/AdminHub"));
-const NotFound    = lazy(() => import("./pages/NotFound"));
+const Fleet = lazy(() => import("./pages/Fleet"));
+const SiteMap = lazy(() => import("./pages/SiteMap"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Auth = lazy(() => import("./pages/Auth"));
+const Tasks = lazy(() => import("./pages/Tasks"));
+const Reports = lazy(() => import("./pages/Reports"));
+const AdminHub = lazy(() => import("./pages/AdminHub"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5,
       retry: (failureCount, error) => {
-        if (error instanceof Error &&
-          (error.message.includes("401") || error.message.includes("403"))) return false;
+        if (
+          error instanceof Error &&
+          (error.message.includes("401") || error.message.includes("403"))
+        )
+          return false;
         return failureCount < 2;
       },
     },
@@ -64,23 +67,23 @@ const App = () => (
               <Suspense fallback={<PageLoader />}>
                 <Routes>
                   {/* Rotas públicas */}
-                  <Route path="/"     element={<Index />} />
+                  <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />
 
                   {/* Rotas protegidas — dentro do shell com sidebar */}
                   <Route element={<DashboardShell />}>
-                    <Route path="/dashboard"   element={<Dashboard />} />
-                    <Route path="/monitoring"  element={<Monitoring />} />
-                    <Route path="/financial"   element={<Financial />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/monitoring" element={<Monitoring />} />
+                    <Route path="/financial" element={<Financial />} />
                     <Route path="/ai-insights" element={<AIInsights />} />
-                    <Route path="/equipment"   element={<Equipment />} />
+                    <Route path="/equipment" element={<Equipment />} />
                     <Route path="/costs-fields" element={<CostsFields />} />
-                    <Route path="/fleet"       element={<Fleet />} />
-                    <Route path="/sitemap"     element={<SiteMap />} />
-                    <Route path="/profile"     element={<Profile />} />
-                    <Route path="/tasks"       element={<Tasks />} />
-                    <Route path="/reports"     element={<Reports />} />
-                    <Route path="/admin"       element={<AdminHub />} />
+                    <Route path="/fleet" element={<Fleet />} />
+                    <Route path="/sitemap" element={<SiteMap />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/tasks" element={<Tasks />} />
+                    <Route path="/reports" element={<Reports />} />
+                    <Route path="/admin" element={<AdminHub />} />
                   </Route>
 
                   <Route path="*" element={<NotFound />} />

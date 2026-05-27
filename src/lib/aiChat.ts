@@ -21,6 +21,13 @@ export interface FarmContext {
   };
   alerts: number;
   harvestYear?: string;
+  weather?: {
+    temperature?: number;
+    humidity?: number;
+    windSpeed?: number;
+    condition?: string;
+    rainfall?: number;
+  };
 }
 
 export interface ChatMessage {
@@ -43,7 +50,11 @@ function buildFarmContextSummary(ctx: FarmContext): string {
     .map((s) => `${s.name} (${s.type}): ${s.value}${s.unit} ${s.status}`)
     .join("; ");
 
-  return `Fazenda com ${ctx.sensors.length} sensores, ${ctx.alerts} alerta(s). Receita: ${brl(ctx.financial.revenue)}, despesas: ${brl(ctx.financial.expenses)}, lucro: ${brl(ctx.financial.profit)}, margem: ${ctx.financial.margin}. ${ctx.harvestYear ? `Safra: ${ctx.harvestYear}.` : ""} Sensores: ${sensorSummary}.`;
+  const weatherSummary = ctx.weather
+    ? `Clima atual: ${ctx.weather.condition ?? "desconhecido"}, ${ctx.weather.temperature?.toFixed(1) ?? "--"}°C, umidade ${ctx.weather.humidity ?? "--"}%, vento ${ctx.weather.windSpeed?.toFixed(0) ?? "--"} km/h, chuva ${ctx.weather.rainfall?.toFixed(1) ?? "0"}mm.`
+    : "";
+
+  return `Fazenda com ${ctx.sensors.length} sensores, ${ctx.alerts} alerta(s). Receita: ${brl(ctx.financial.revenue)}, despesas: ${brl(ctx.financial.expenses)}, lucro: ${brl(ctx.financial.profit)}, margem: ${ctx.financial.margin}. ${ctx.harvestYear ? `Safra: ${ctx.harvestYear}.` : ""} ${weatherSummary} Sensores: ${sensorSummary}.`;
 }
 
 function ensureHistoryIncludesUser(history: ChatMessage[], message: string) {
@@ -69,6 +80,11 @@ function has(text: string, ...terms: string[]) {
 function offlineReply(q: string, ctx: FarmContext): string {
   const temp = ctx.sensors.find((s) => s.type === "temperature");
   const hum = ctx.sensors.find((s) => s.type === "soil_moisture");
+  const windSpeed = ctx.weather?.windSpeed;
+  const rain =
+    ctx.weather?.rainfall ??
+    ctx.sensors.find((s) => s.type === "rain")?.value ??
+    0;
   const online = ctx.sensors.filter((s) => s.status === "online").length;
   const crit = ctx.sensors.filter(
     (s) => s.status === "critical" || s.status === "warning",
@@ -104,10 +120,24 @@ function offlineReply(q: string, ctx: FarmContext): string {
   }
 
   if (has(q, "chuva", "previsao", "previsão", "tempo", "forecast")) {
-    const rain = ctx.sensors.find((s) => s.type === "rain")?.value ?? 0;
     return rain > 0
-      ? `🌧️ **Chuva detectada:** ${rain}mm. Se você estiver irrigando, ajuste para evitar excesso de água.`
-      : `☀️ **Sem chuva recente detectada.** Monitore o solo e habilite irrigação se necessário.`;
+      ? `🌧️ **Chuva detectada:** ${rain.toFixed(1)}mm. Se você estiver irrigando, ajuste para evitar excesso de água e proteja as áreas sob cultivo sensível.`
+      : `☀️ **Sem chuva recente detectada.** Monitore o solo e mantenha irrigação moderada se necessário.`;
+  }
+
+  if (has(q, "vento", "ventania", "rajada", "rajadas")) {
+    return windSpeed !== undefined
+      ? windSpeed > 30
+        ? `💨 **Vento forte:** ${windSpeed.toFixed(0)} km/h. Evite aplicações foliares e proteja estruturas leves.`
+        : `🌬️ **Vento moderado:** ${windSpeed.toFixed(0)} km/h. Condições seguras para a maioria das operações em campo.`
+      : `🌬️ **Vento:** Dados não disponíveis no momento. Verifique os sensores de anemômetro.`;
+  }
+
+  if (has(q, "geada", "congelamento", "frost", "frio intenso")) {
+    const t = temp?.value ?? 15;
+    return t < 10
+      ? `❄️ **Risco de geada:** temperatura atual ${t}°C. Proteja culturas sensíveis e considere irrigação noturna leve se necessário.`
+      : `🧊 **Sem risco imediato de geada** com temperatura atual ${t}°C. Continue monitorando se cair abaixo de 8°C.`;
   }
 
   if (has(q, "plantio", "plantar", "safra", "semeadura", "cultura", "solo")) {

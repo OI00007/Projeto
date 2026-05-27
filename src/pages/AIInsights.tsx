@@ -36,7 +36,11 @@ import {
   Check,
   Star,
 } from "lucide-react";
-import { useSensorData, useFinancialData } from "@/contexts/FarmDataContext";
+import {
+  useSensorData,
+  useFinancialData,
+  useWeatherData,
+} from "@/contexts/FarmDataContext";
 import { formatCurrencyBRL } from "@/lib/formatters";
 import { getCurrentHarvestYear } from "@/lib/dateTime";
 import { processAIMessage, type FarmContext } from "@/lib/aiChat";
@@ -54,6 +58,8 @@ interface ChatMsg {
 // ─── Sugestões de perguntas ───────────────────────────────────────────────────
 const SUGGESTIONS = [
   "Devo irrigar hoje com base nos sensores?",
+  "Vai chover nas próximas horas?",
+  "Há risco de geada hoje?",
   "Como está minha margem de lucro?",
   "Quais sensores precisam de atenção?",
   "Condições para plantio de soja agora",
@@ -209,6 +215,13 @@ const AIInsights = () => {
           expenses: financial.expenses,
           profit: financial.profit,
           margin: financial.profitMargin.toFixed(1) + "%",
+        },
+        weather: {
+          temperature: weather.temperature,
+          humidity: weather.humidity,
+          windSpeed: weather.windSpeed,
+          condition: weather.condition,
+          rainfall: weather.rainfall,
         },
         alerts: criticalSensors.length,
         harvestYear: getCurrentHarvestYear(),

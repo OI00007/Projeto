@@ -1,8 +1,18 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-ignore
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// @ts-ignore
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+declare const Deno: {
+  env: {
+    get(key: string): string | null;
+  };
+};
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
   "X-Content-Type-Options": "nosniff",
@@ -103,9 +113,23 @@ serve(async (req) => {
       );
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl || !supabaseKey) {
+      console.error(`[${requestId}] Supabase environment variables missing`);
+      return new Response(
+        JSON.stringify({
+          error: "Serviço de backend não configurado",
+          code: "SERVICE_UNAVAILABLE",
+        }),
+        {
+          status: 503,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     const {
       data: { user },
@@ -319,47 +343,16 @@ ${sanitizedContext ? `Contexto atual da fazenda: ${sanitizedContext}` : ""}`;
         },
       );
 
-      clearTimeout(timeoutId);
-
       if (!response.ok) {
-        const elapsed = Date.now() - startTime;
+        const errorText = await response.text();
         console.error(
-          `[${requestId}] AI gateway error: ${response.status} (${elapsed}ms)`,
+          `[${requestId}] AI service returned ${response.status}: ${errorText}`,
         );
-
-        if (response.status === 429) {
-          return new Response(
-            JSON.stringify({
-              error:
-                "Limite de requisições excedido. Tente novamente em alguns minutos.",
-              code: "AI_RATE_LIMITED",
-            }),
-            {
-              status: 429,
-              headers: {
-                ...corsHeaders,
-                "Content-Type": "application/json",
-                "Retry-After": "60",
-              },
-            },
-          );
-        }
-        if (response.status === 402) {
-          return new Response(
-            JSON.stringify({
-              error: "Créditos insuficientes. Adicione créditos à sua conta.",
-              code: "INSUFFICIENT_CREDITS",
-            }),
-            {
-              status: 402,
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            },
-          );
-        }
         return new Response(
           JSON.stringify({
-            error: "Erro no serviço de IA",
+            error: "Erro ao processar IA",
             code: "AI_SERVICE_ERROR",
+            details: errorText,
           }),
           {
             status: 502,
@@ -395,23 +388,21 @@ ${sanitizedContext ? `Contexto atual da fazenda: ${sanitizedContext}` : ""}`;
       const elapsed = Date.now() - startTime;
       console.log(`[${requestId}] AI request successful (${elapsed}ms)`);
 
-      return new Response(JSON.stringify({ content }), {
+      return new Response(JSON.stringify({ success: true, content }), {
         status: 200,
         headers: {
           ...corsHeaders,
           "Content-Type": "application/json",
-          "X-RateLimit-Remaining": remaining.toString(),
+          "X-RateLimit-Remaining": String(remaining),
         },
       });
-    } catch (fetchError) {
-      clearTimeout(timeoutId);
-
-      if (fetchError instanceof Error && fetchError.name === "AbortError") {
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
         console.error(`[${requestId}] AI request timed out`);
         return new Response(
           JSON.stringify({
-            error: "Tempo limite excedido. Tente novamente.",
-            code: "TIMEOUT",
+            error: "Tempo limite excedido ao processar IA",
+            code: "AI_TIMEOUT",
           }),
           {
             status: 504,
@@ -419,16 +410,27 @@ ${sanitizedContext ? `Contexto atual da fazenda: ${sanitizedContext}` : ""}`;
           },
         );
       }
-      throw fetchError;
+
+      console.error(`[${requestId}] AI service error:`, error);
+      return new Response(
+        JSON.stringify({
+          error: "Erro ao processar a requisição de IA",
+          code: "AI_SERVICE_ERROR",
+        }),
+        {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    } finally {
+      clearTimeout(timeoutId);
     }
   } catch (error) {
-    const elapsed = Date.now() - startTime;
-    console.error(`[${requestId}] AI chat error (${elapsed}ms):`, error);
-
+    console.error(`[${requestId}] Unexpected error:`, error);
     return new Response(
       JSON.stringify({
         error: "Erro interno do servidor",
-        code: "INTERNAL_ERROR",
+        code: "SERVER_ERROR",
       }),
       {
         status: 500,
