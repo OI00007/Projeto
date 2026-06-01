@@ -261,10 +261,10 @@ export const Footer = () => {
         <div className="mt-16 pt-8 border-t border-border">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <p className="text-sm text-muted-foreground flex items-center gap-1">
-              © {currentYear} Argom. Feito com
-              <Heart
-                className="w-4 h-4 text-destructive animate-pulse"
-                aria-label="amor"
+              © {currentYear} Argom. Feito pela
+              <Leaf
+                className="w-4 h-4 text-primary ml-1 animate-pulse-gentle"
+                aria-label="Argom"
               />
               no Brasil.
             </p>
