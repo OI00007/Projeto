@@ -16,7 +16,6 @@ const routeConfig: Record<string, { label: string; parent?: string }> = {
   "/dashboard": { label: "Dashboard" },
   "/monitoring": { label: "Monitoramento", parent: "/dashboard" },
   "/financial": { label: "Financeiro", parent: "/dashboard" },
-  "/ai-insights": { label: "IA & Insights", parent: "/dashboard" },
   "/equipment": { label: "Equipamentos", parent: "/dashboard" },
   "/costs-fields": { label: "Custos/Talhão", parent: "/dashboard" },
   "/fleet": { label: "Frotas", parent: "/dashboard" },
@@ -24,33 +23,33 @@ const routeConfig: Record<string, { label: string; parent?: string }> = {
   "/profile": { label: "Perfil", parent: "/dashboard" },
 };
 
-export function PageHeader({ 
-  title, 
-  subtitle, 
-  showBackButton = true, 
+export function PageHeader({
+  title,
+  subtitle,
+  showBackButton = true,
   actions,
-  className 
+  className,
 }: PageHeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
-  
+
   // Build breadcrumb trail
   const buildBreadcrumbs = () => {
     const breadcrumbs: Array<{ path: string; label: string }> = [];
     let path = currentPath;
-    
+
     while (path && routeConfig[path]) {
       breadcrumbs.unshift({ path, label: routeConfig[path].label });
       path = routeConfig[path].parent || "";
     }
-    
+
     return breadcrumbs;
   };
-  
+
   const breadcrumbs = buildBreadcrumbs();
   const canGoBack = breadcrumbs.length > 1 || window.history.length > 1;
-  
+
   const handleBack = () => {
     if (breadcrumbs.length > 1) {
       navigate(breadcrumbs[breadcrumbs.length - 2].path);
@@ -74,12 +73,12 @@ export function PageHeader({
             <ArrowLeft className="h-5 w-5" />
           </Button>
         )}
-        
+
         {/* Custom breadcrumb without nested li issues */}
         <nav aria-label="breadcrumb">
           <ol className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground sm:gap-2">
             <li className="inline-flex items-center">
-              <button 
+              <button
                 onClick={() => navigate("/dashboard")}
                 className="flex items-center gap-1 hover:text-primary transition-colors cursor-pointer"
               >
@@ -87,7 +86,7 @@ export function PageHeader({
                 <span className="hidden sm:inline">Início</span>
               </button>
             </li>
-            
+
             {breadcrumbs.map((crumb, index) => (
               <li key={crumb.path} className="inline-flex items-center gap-1.5">
                 <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
@@ -96,7 +95,7 @@ export function PageHeader({
                     {crumb.label}
                   </span>
                 ) : (
-                  <button 
+                  <button
                     onClick={() => navigate(crumb.path)}
                     className="hover:text-primary transition-colors cursor-pointer"
                   >
@@ -108,7 +107,7 @@ export function PageHeader({
           </ol>
         </nav>
       </div>
-      
+
       {/* Title and Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -122,9 +121,7 @@ export function PageHeader({
           )}
         </div>
         {actions && (
-          <div className="flex items-center gap-2 shrink-0">
-            {actions}
-          </div>
+          <div className="flex items-center gap-2 shrink-0">{actions}</div>
         )}
       </div>
     </div>

@@ -14,7 +14,6 @@ const Index = lazy(() => import("./pages/Index"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Monitoring = lazy(() => import("./pages/Monitoring"));
 const Financial = lazy(() => import("./pages/Financial"));
-const AIInsights = lazy(() => import("./pages/AIInsights"));
 const Equipment = lazy(() => import("./pages/Equipment"));
 const CostsFields = lazy(() => import("./pages/CostsFields"));
 const Fleet = lazy(() => import("./pages/Fleet"));
@@ -75,7 +74,6 @@ const App = () => (
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/monitoring" element={<Monitoring />} />
                     <Route path="/financial" element={<Financial />} />
-                    <Route path="/ai-insights" element={<AIInsights />} />
                     <Route path="/equipment" element={<Equipment />} />
                     <Route path="/costs-fields" element={<CostsFields />} />
                     <Route path="/fleet" element={<Fleet />} />

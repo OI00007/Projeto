@@ -39,8 +39,13 @@ export const VALIDATION = {
 export const FILE_UPLOAD = {
   MAX_SIZE_MB: 10,
   MAX_SIZE_BYTES: 10 * 1024 * 1024, // 10MB
-  ALLOWED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'] as const,
-  ALLOWED_DOCUMENT_TYPES: ['application/pdf', 'text/csv'] as const,
+  ALLOWED_IMAGE_TYPES: [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+  ] as const,
+  ALLOWED_DOCUMENT_TYPES: ["application/pdf", "text/csv"] as const,
 } as const;
 
 // ==================== UI ====================
@@ -64,8 +69,8 @@ export const SENSOR_THRESHOLDS = {
 
 // ==================== Financial ====================
 export const FINANCIAL = {
-  CURRENCY: 'BRL',
-  LOCALE: 'pt-BR',
+  CURRENCY: "BRL",
+  LOCALE: "pt-BR",
   DECIMAL_PLACES: 2,
   PROFIT_MARGIN_WARNING: 20,
   PROFIT_MARGIN_CRITICAL: 10,
@@ -73,73 +78,72 @@ export const FINANCIAL = {
 
 // ==================== Task Categories ====================
 export const TASK_CATEGORIES = {
-  IRRIGACAO: { label: 'Irrigação', color: 'info' },
-  MANUTENCAO: { label: 'Manutenção', color: 'warning' },
-  DEFENSIVOS: { label: 'Defensivos', color: 'destructive' },
-  COLHEITA: { label: 'Colheita', color: 'success' },
-  PLANTIO: { label: 'Plantio', color: 'primary' },
-  GESTAO: { label: 'Gestão', color: 'secondary' },
+  IRRIGACAO: { label: "Irrigação", color: "info" },
+  MANUTENCAO: { label: "Manutenção", color: "warning" },
+  DEFENSIVOS: { label: "Defensivos", color: "destructive" },
+  COLHEITA: { label: "Colheita", color: "success" },
+  PLANTIO: { label: "Plantio", color: "primary" },
+  GESTAO: { label: "Gestão", color: "secondary" },
 } as const;
 
 // ==================== Priorities ====================
 export const PRIORITIES = {
-  LOW: { label: 'Baixa', color: 'info', order: 1 },
-  MEDIUM: { label: 'Média', color: 'warning', order: 2 },
-  HIGH: { label: 'Alta', color: 'destructive', order: 3 },
+  LOW: { label: "Baixa", color: "info", order: 1 },
+  MEDIUM: { label: "Média", color: "warning", order: 2 },
+  HIGH: { label: "Alta", color: "destructive", order: 3 },
 } as const;
 
 // ==================== Status ====================
 export const TASK_STATUS = {
-  PENDING: { label: 'Pendente', color: 'warning' },
-  IN_PROGRESS: { label: 'Em Progresso', color: 'info' },
-  COMPLETED: { label: 'Concluída', color: 'success' },
+  PENDING: { label: "Pendente", color: "warning" },
+  IN_PROGRESS: { label: "Em Progresso", color: "info" },
+  COMPLETED: { label: "Concluída", color: "success" },
 } as const;
 
 export const EQUIPMENT_STATUS = {
-  ACTIVE: { label: 'Ativo', color: 'success' },
-  MAINTENANCE: { label: 'Manutenção', color: 'warning' },
-  OFFLINE: { label: 'Offline', color: 'destructive' },
+  ACTIVE: { label: "Ativo", color: "success" },
+  MAINTENANCE: { label: "Manutenção", color: "warning" },
+  OFFLINE: { label: "Offline", color: "destructive" },
 } as const;
 
 // ==================== Routes ====================
 export const ROUTES = {
-  HOME: '/',
-  AUTH: '/auth',
-  DASHBOARD: '/dashboard',
-  FINANCIAL: '/financial',
-  MONITORING: '/monitoring',
-  TASKS: '/tasks',
-  EQUIPMENT: '/equipment',
-  FLEET: '/fleet',
-  COSTS_FIELDS: '/costs-fields',
-  AI_INSIGHTS: '/ai-insights',
-  PROFILE: '/profile',
+  HOME: "/",
+  AUTH: "/auth",
+  DASHBOARD: "/dashboard",
+  FINANCIAL: "/financial",
+  MONITORING: "/monitoring",
+  TASKS: "/tasks",
+  EQUIPMENT: "/equipment",
+  FLEET: "/fleet",
+  COSTS_FIELDS: "/costs-fields",
+  PROFILE: "/profile",
 } as const;
 
 // ==================== Storage Keys ====================
 export const STORAGE_KEYS = {
-  THEME: 'argom-theme',
-  USER_PREFERENCES: 'argom-user-preferences',
-  SIDEBAR_STATE: 'argom-sidebar-collapsed',
-  LAST_VISITED: 'argom-last-visited',
+  THEME: "argom-theme",
+  USER_PREFERENCES: "argom-user-preferences",
+  SIDEBAR_STATE: "argom-sidebar-collapsed",
+  LAST_VISITED: "argom-last-visited",
 } as const;
 
 // ==================== Error Messages ====================
 export const ERROR_MESSAGES = {
-  GENERIC: 'Ocorreu um erro. Por favor, tente novamente.',
-  NETWORK: 'Erro de conexão. Verifique sua internet.',
-  UNAUTHORIZED: 'Você não tem permissão para acessar este recurso.',
-  NOT_FOUND: 'Recurso não encontrado.',
-  VALIDATION: 'Por favor, verifique os dados informados.',
-  RATE_LIMITED: 'Muitas tentativas. Aguarde alguns minutos.',
-  SESSION_EXPIRED: 'Sua sessão expirou. Faça login novamente.',
+  GENERIC: "Ocorreu um erro. Por favor, tente novamente.",
+  NETWORK: "Erro de conexão. Verifique sua internet.",
+  UNAUTHORIZED: "Você não tem permissão para acessar este recurso.",
+  NOT_FOUND: "Recurso não encontrado.",
+  VALIDATION: "Por favor, verifique os dados informados.",
+  RATE_LIMITED: "Muitas tentativas. Aguarde alguns minutos.",
+  SESSION_EXPIRED: "Sua sessão expirou. Faça login novamente.",
 } as const;
 
 // ==================== Success Messages ====================
 export const SUCCESS_MESSAGES = {
-  SAVED: 'Salvo com sucesso!',
-  DELETED: 'Excluído com sucesso!',
-  UPDATED: 'Atualizado com sucesso!',
-  CREATED: 'Criado com sucesso!',
-  SENT: 'Enviado com sucesso!',
+  SAVED: "Salvo com sucesso!",
+  DELETED: "Excluído com sucesso!",
+  UPDATED: "Atualizado com sucesso!",
+  CREATED: "Criado com sucesso!",
+  SENT: "Enviado com sucesso!",
 } as const;

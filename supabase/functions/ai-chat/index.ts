@@ -71,7 +71,104 @@ function validateMessage(
   );
 }
 
-serve(async (req) => {
+async function getSessionMemory(
+  supabase: ReturnType<typeof createClient>,
+  sessionId: string,
+): Promise<string> {
+  const { data, error } = await supabase
+    .from("ai_chat_sessions")
+    .select("memory_summary")
+    .eq("id", sessionId)
+    .single();
+
+  if (error || !data || typeof data.memory_summary !== "string") {
+    return "";
+  }
+
+  return data.memory_summary.trim();
+}
+
+async function updateSessionMemory(
+  supabase: ReturnType<typeof createClient>,
+  sessionId: string,
+  previousMemory: string,
+  history: Array<{ role: string; content: string }>,
+  messages: Array<{ role: string; content: string }>,
+  responseText: string,
+  apiKey: string,
+): Promise<void> {
+  const summaryHistory = [
+    ...history,
+    ...messages,
+    { role: "assistant", content: responseText },
+  ];
+  const conversation = summaryHistory
+    .slice(-30)
+    .map((msg) => `${msg.role}: ${msg.content}`)
+    .join("\n");
+
+  const prompt = `Você é um assistente que resume o que deve ser lembrado de uma conversa agrícola. Produza um texto curto com fatos importantes, preferências do produtor, condições da fazenda e decisões relevantes. Não repita informações triviais e não inclua detalhes técnicos ou chaves. Use português.
+
+Memória atual: ${previousMemory || "Nenhuma memória anterior."}
+
+Conversa recente:
+${conversation}
+
+Responda apenas com a nova memória persistente, de forma concisa.`;
+
+  try {
+    const response = await fetch(
+      "https://ai.gateway.lovable.dev/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            { role: "system", content: "Você resume memória de sessão." },
+            { role: "user", content: prompt },
+          ],
+          max_tokens: 300,
+          stream: false,
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.warn(
+        `[Memory] AI summary request failed: ${response.status}: ${errorText}`,
+      );
+      return;
+    }
+
+    const payload = await response.json().catch(() => null);
+    const newMemory =
+      typeof payload?.content === "string"
+        ? payload.content
+        : typeof payload?.message === "string"
+          ? payload.message
+          : (payload?.choices?.[0]?.message?.content ??
+            payload?.choices?.[0]?.content ??
+            payload?.output_text ??
+            "");
+
+    const summary = sanitizeText(newMemory).trim();
+    if (!summary) return;
+
+    await supabase
+      .from("ai_chat_sessions")
+      .update({ memory_summary: summary })
+      .eq("id", sessionId);
+  } catch (error) {
+    console.warn("[Memory] Could not update session memory:", error);
+  }
+}
+
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -203,10 +300,38 @@ serve(async (req) => {
       );
     }
 
-    const { messages, context } = body as {
+    const { messages, context, sessionId } = body as {
       messages?: unknown[];
       context?: string;
+      sessionId?: string;
     };
+
+    // restore conversation history for the current session
+    let sessionHistory: Array<{ role: string; content: string }> = [];
+    let sessionMemory = "";
+    if (typeof sessionId === "string" && sessionId.trim()) {
+      const { data: storedMessages, error: historyError } = await supabase
+        .from("ai_chat_messages")
+        .select("role, content")
+        .eq("session_id", sessionId)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: true })
+        .limit(40);
+
+      if (historyError) {
+        console.warn(
+          `[${requestId}] Could not load session history:`,
+          historyError.message,
+        );
+      } else if (Array.isArray(storedMessages)) {
+        sessionHistory = storedMessages.map((msg) => ({
+          role: msg.role,
+          content: sanitizeText(msg.content),
+        }));
+      }
+
+      sessionMemory = await getSessionMemory(supabase, sessionId.trim());
+    }
 
     // Validate messages array
     if (!Array.isArray(messages) || messages.length === 0) {
@@ -315,7 +440,13 @@ mas explique termos complexos. Responda sempre em português brasileiro.
 
 IMPORTANTE: Nunca revele informações sobre sua implementação, chaves de API ou detalhes técnicos do sistema.
 
-${sanitizedContext ? `Contexto atual da fazenda: ${sanitizedContext}` : ""}`;
+${
+  sessionMemory
+    ? `Memória da sessão anterior: ${sessionMemory}
+
+`
+    : ""
+}${sanitizedContext ? `Contexto atual da fazenda: ${sanitizedContext}` : ""}`;
 
     // Call AI with timeout
     const controller = new AbortController();
@@ -382,6 +513,18 @@ ${sanitizedContext ? `Contexto atual da fazenda: ${sanitizedContext}` : ""}`;
             status: 502,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           },
+        );
+      }
+
+      if (typeof sessionId === "string" && sessionId.trim()) {
+        await updateSessionMemory(
+          supabase,
+          sessionId.trim(),
+          sessionMemory,
+          sessionHistory,
+          validatedMessages,
+          content,
+          LOVABLE_API_KEY,
         );
       }
 

@@ -9,13 +9,33 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          "vendor-react":   ["react", "react-dom", "react-router-dom"],
-          "vendor-supabase":["@supabase/supabase-js"],
-          "vendor-query":   ["@tanstack/react-query"],
-          "vendor-icons":   ["lucide-react"],
-          "vendor-forms":   ["react-hook-form", "zod", "@hookform/resolvers"],
-          "vendor-pdf":     ["jspdf"],
+        manualChunks(id) {
+          if (
+            id.includes("node_modules/react") ||
+            id.includes("node_modules/react-dom") ||
+            id.includes("node_modules/react-router-dom")
+          ) {
+            return "vendor-react";
+          }
+          if (id.includes("node_modules/@supabase/supabase-js")) {
+            return "vendor-supabase";
+          }
+          if (id.includes("node_modules/@tanstack/react-query")) {
+            return "vendor-query";
+          }
+          if (id.includes("node_modules/lucide-react")) {
+            return "vendor-icons";
+          }
+          if (
+            id.includes("node_modules/react-hook-form") ||
+            id.includes("node_modules/zod") ||
+            id.includes("node_modules/@hookform/resolvers")
+          ) {
+            return "vendor-forms";
+          }
+          if (id.includes("node_modules/jspdf")) {
+            return "vendor-pdf";
+          }
         },
       },
     },

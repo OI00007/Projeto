@@ -183,7 +183,7 @@ Verifique maturação, umidade e condições climáticas. Evite colher em solo m
   }
 
   if (has(q, "como usar", "ajuda", "tutorial")) {
-    return `🌿 **Sistema Argom**\n\n📊 Dashboard · 📡 Monitoramento · 💰 Financeiro · 🤖 IA & Insights · 🔧 Equipamentos · 🚜 Frotas · 📋 Tarefas · 📈 Relatórios\n\n💡 Clique no nome da cidade no widget de clima para trocar para sua cidade!\n\nO que mais posso explicar?`;
+    return `🌿 **Sistema Argom**\n\n📊 Dashboard · 📡 Monitoramento · 💰 Financeiro · 🔧 Equipamentos · 🚜 Frotas · 📋 Tarefas · 📈 Relatórios\n\n💡 Clique no nome da cidade no widget de clima para trocar para sua cidade!\n\nO que mais posso explicar?`;
   }
 
   return `Sobre "${q}", com os dados atuais:\n• Temperatura: ${temp?.value ?? "--"}°C · Umidade: ${hum?.value ?? "--"}%\n• Lucro: ${brl(ctx.financial.profit)}\n\nTente perguntar sobre irrigação, clima, financeiro, soja, milho ou sensores para respostas mais detalhadas! 🌿`;
@@ -194,6 +194,7 @@ export async function processAIMessage(
   history: ChatMessage[],
   ctx: FarmContext,
   onChunk?: (partial: string) => void,
+  sessionId?: string,
 ): Promise<string> {
   const session = await supabase.auth.getSession();
   const token = session.data.session?.access_token;
@@ -204,7 +205,11 @@ export async function processAIMessage(
   if (token) {
     try {
       const { data, error } = await supabase.functions.invoke("ai-chat", {
-        body: JSON.stringify({ messages: requestMessages, context }),
+        body: JSON.stringify({
+          messages: requestMessages,
+          context,
+          sessionId,
+        }),
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -215,10 +220,17 @@ export async function processAIMessage(
         throw error;
       }
 
-      let payload: any = data;
+      type AiFunctionPayload = {
+        content?: string;
+        message?: string;
+        choices?: Array<{ message?: { content?: string }; content?: string }>;
+        output_text?: string;
+      } | null;
+
+      let payload: AiFunctionPayload = data as AiFunctionPayload;
       if (typeof data === "string") {
         try {
-          payload = JSON.parse(data);
+          payload = JSON.parse(data) as AiFunctionPayload;
         } catch {
           payload = null;
         }

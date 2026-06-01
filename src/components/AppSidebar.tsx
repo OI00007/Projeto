@@ -5,7 +5,6 @@ import {
   BarChart3,
   MonitorSpeaker,
   DollarSign,
-  Brain,
   Wrench,
   Calculator,
   Truck,
@@ -65,12 +64,6 @@ const menuItems = [
     url: "/reports",
     icon: FileText,
     description: "Gerar e baixar PDFs",
-  },
-  {
-    title: "IA & Insights",
-    url: "/ai-insights",
-    icon: Brain,
-    description: "Análises inteligentes",
   },
   {
     title: "Equipamentos",
@@ -196,30 +189,20 @@ export function AppSidebar() {
                       <NavLink
                         to={item.url}
                         className={cn(
-                          "flex items-center gap-3 p-3.5 rounded-xl transition-all duration-500 ease-out group relative overflow-hidden",
+                          "flex items-center p-3.5 rounded-xl transition-all duration-500 ease-out group relative overflow-hidden",
                           active
                             ? "gradient-primary text-primary-foreground shadow-glow"
                             : "hover:bg-gradient-to-r hover:from-muted/60 hover:to-muted/40 text-muted-foreground hover:text-foreground",
                         )}
                       >
-                        <item.icon
-                          className={cn(
-                            "h-5 w-5 flex-shrink-0 transition-all duration-500",
-                            active
-                              ? "text-primary-foreground scale-110"
-                              : "group-hover:scale-110 group-hover:text-primary",
-                          )}
-                        />
-                        {!collapsed && (
-                          <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-sm">
-                              {item.title}
-                            </div>
-                            <div className="text-xs opacity-70 truncate">
-                              {item.description}
-                            </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-sm">
+                            {item.title}
                           </div>
-                        )}
+                          <div className="text-xs opacity-70 truncate">
+                            {item.description}
+                          </div>
+                        </div>
                         {active && (
                           <div className="absolute right-3 w-2 h-2 rounded-full bg-primary-foreground/80 animate-pulse"></div>
                         )}
