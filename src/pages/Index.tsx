@@ -47,7 +47,7 @@ const Index = () => {
       value: "95%",
       label: "Satisfação",
       icon: Star,
-      ariaLabel: "95 porcento de satisfação dos clientes",
+      ariaLabel: "95 porcento de satisfação dos clients",
     },
     {
       value: "40%",
@@ -301,36 +301,35 @@ const Index = () => {
               </p>
             </header>
 
-            <div
+            <ul
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8"
-              role="list"
               aria-label="Lista de recursos"
             >
               {features.map((feature, index) => {
                 const Icon = feature.icon;
                 return (
-                  <Card
-                    key={index}
-                    className="bg-card/80 backdrop-blur-sm p-7 sm:p-8 border-primary/10 hover:border-primary/25 group transition-all duration-700 hover:-translate-y-3 hover:shadow-large entrance-scale rounded-2xl"
-                    style={{ animationDelay: `${0.1 + index * 0.1}s` }}
-                    role="listitem"
-                  >
-                    <div
-                      className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl gradient-primary flex items-center justify-center mb-6 group-hover:scale-110 transition-all duration-500 shadow-accent"
-                      aria-hidden="true"
+                  <li key={feature.title} className="rounded-2xl">
+                    <Card
+                      className="bg-card/80 backdrop-blur-sm p-7 sm:p-8 border-primary/10 hover:border-primary/25 group transition-all duration-700 hover:-translate-y-3 hover:shadow-large entrance-scale rounded-2xl"
+                      style={{ animationDelay: `${0.1 + index * 0.1}s` }}
                     >
-                      <Icon className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
-                    </div>
-                    <h3 className="text-lg sm:text-xl font-bold text-foreground mb-4 group-hover:text-primary transition-colors duration-500">
-                      {feature.title}
-                    </h3>
-                    <p className="text-muted-foreground leading-relaxed text-sm sm:text-base">
-                      {feature.description}
-                    </p>
-                  </Card>
+                      <div
+                        className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl gradient-primary flex items-center justify-center mb-6 group-hover:scale-110 transition-all duration-500 shadow-accent"
+                        aria-hidden="true"
+                      >
+                        <Icon className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
+                      </div>
+                      <h3 className="text-lg sm:text-xl font-bold text-foreground mb-4 group-hover:text-primary transition-colors duration-500">
+                        {feature.title}
+                      </h3>
+                      <p className="text-muted-foreground leading-relaxed text-sm sm:text-base">
+                        {feature.description}
+                      </p>
+                    </Card>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
           </div>
         </section>
 
@@ -507,7 +506,7 @@ const Index = () => {
                   eficiência e reduzindo custos.
                 </p>
 
-                <div
+                <ul
                   className="grid grid-cols-2 gap-6"
                   role="list"
                   aria-label="Métricas de automação"
@@ -520,26 +519,26 @@ const Index = () => {
                   ].map((item, index) => {
                     const Icon = item.icon;
                     return (
-                      <Card
-                        key={index}
-                        className="p-6 border-primary/10 hover:border-primary/30 card-hover group animate-scale-in"
-                        style={{ animationDelay: `${index * 0.1}s` }}
-                        role="listitem"
-                      >
-                        <Icon
-                          className="w-8 h-8 text-primary mb-3 group-hover:scale-125 group-hover:rotate-12 transition-all duration-500"
-                          aria-hidden="true"
-                        />
-                        <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors duration-300">
-                          {item.value}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {item.label}
-                        </p>
-                      </Card>
+                      <li key={item.label} className="rounded-2xl">
+                        <Card
+                          className="p-6 border-primary/10 hover:border-primary/30 card-hover group animate-scale-in"
+                          style={{ animationDelay: `${index * 0.1}s` }}
+                        >
+                          <Icon
+                            className="w-8 h-8 text-primary mb-3 group-hover:scale-125 group-hover:rotate-12 transition-all duration-500"
+                            aria-hidden="true"
+                          />
+                          <div className="text-3xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors duration-300">
+                            {item.value}
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {item.label}
+                          </p>
+                        </Card>
+                      </li>
                     );
                   })}
-                </div>
+                </ul>
               </div>
             </div>
           </div>
@@ -567,57 +566,55 @@ const Index = () => {
               </p>
             </header>
 
-            <div
+            <ul
               className="grid grid-cols-1 md:grid-cols-2 gap-8"
               role="list"
               aria-label="Depoimentos de clientes"
             >
               {testimonials.map((testimonial, index) => (
-                <Card
-                  key={index}
-                  className="glass-card p-10 hover:scale-105 transition-all border-primary/10 hover:border-primary/30"
-                  role="listitem"
-                >
-                  <Quote
-                    className="w-12 h-12 text-primary/30 mb-6"
-                    aria-hidden="true"
-                  />
-                  <blockquote>
-                    <p className="text-lg text-foreground mb-6 leading-relaxed italic">
-                      "{testimonial.quote}"
-                    </p>
-                  </blockquote>
-                  <footer className="flex items-center gap-4">
-                    <div
-                      className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center text-white font-bold"
+                <li key={testimonial.author} className="rounded-2xl">
+                  <Card className="glass-card p-10 hover:scale-105 transition-all border-primary/10 hover:border-primary/30">
+                    <Quote
+                      className="w-12 h-12 text-primary/30 mb-6"
                       aria-hidden="true"
-                    >
-                      {testimonial.author.charAt(0)}
-                    </div>
-                    <div>
-                      <cite className="font-semibold text-foreground not-italic">
-                        {testimonial.author}
-                      </cite>
-                      <p className="text-sm text-muted-foreground">
-                        {testimonial.role}
+                    />
+                    <blockquote>
+                      <p className="text-lg text-foreground mb-6 leading-relaxed italic">
+                        "{testimonial.quote}"
                       </p>
+                    </blockquote>
+                    <footer className="flex items-center gap-4">
                       <div
-                        className="flex gap-1 mt-1"
-                        aria-label={`Avaliação: ${testimonial.rating} de 5 estrelas`}
+                        className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center text-white font-bold"
+                        aria-hidden="true"
                       >
-                        {[...Array(testimonial.rating)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className="w-4 h-4 fill-accent text-accent"
-                            aria-hidden="true"
-                          />
-                        ))}
+                        {testimonial.author.charAt(0)}
                       </div>
-                    </div>
-                  </footer>
-                </Card>
+                      <div>
+                        <cite className="font-semibold text-foreground not-italic">
+                          {testimonial.author}
+                        </cite>
+                        <p className="text-sm text-muted-foreground">
+                          {testimonial.role}
+                        </p>
+                        <div
+                          className="flex gap-1 mt-1"
+                          aria-label={`Avaliação: ${testimonial.rating} de 5 estrelas`}
+                        >
+                          {[new Array(testimonial.rating)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className="w-4 h-4 fill-accent text-accent"
+                              aria-hidden="true"
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </footer>
+                  </Card>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         </section>
 

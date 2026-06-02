@@ -51,8 +51,13 @@ const Profile = () => {
   const [error, setError] = useState("");
 
   const isOwner = !!user?.user_metadata?.cpf;
-  const isAdmin = user?.email === "joao.silva@fazenda.com" || user?.email?.includes('admin'); // MOCK
-  const canSeeTeam = isOwner || isAdmin;
+  const isManager =
+    user?.email === "joao.silva@fazenda.com" || user?.email?.includes("admin"); // MOCK
+  const currentRole: "owner" | "manager" | "worker" = isOwner
+    ? "owner"
+    : isManager
+      ? "manager"
+      : "worker";
 
   // Form states
   const [fullName, setFullName] = useState("");
@@ -192,28 +197,29 @@ const Profile = () => {
         )}
 
         <Tabs defaultValue="profile" className="space-y-6">
-            <TabsList className={`grid w-full h-auto ${canSeeTeam ? 'grid-cols-4' : 'grid-cols-3'}`}>
-              <TabsTrigger value="profile" className="py-3 text-xs sm:text-sm">
-                <User className="w-4 h-4 mr-2 hidden sm:inline" />
-                Informações
-              </TabsTrigger>
-              {canSeeTeam && (
-                <TabsTrigger value="team" className="py-3 text-xs sm:text-sm">
-                  <Users className="w-4 h-4 mr-2 hidden sm:inline" />
-                  Equipe
-                </TabsTrigger>
-              )}
-              <TabsTrigger value="security" className="py-3 text-xs sm:text-sm">
-                <Lock className="w-4 h-4 mr-2 hidden sm:inline" />
-                Segurança
-              </TabsTrigger>
-              <TabsTrigger value="notifications" className="py-3 text-xs sm:text-sm">
-                <Bell className="w-4 h-4 mr-2 hidden sm:inline" />
-                Notificações
-              </TabsTrigger>
-            </TabsList>
+          <TabsList className="grid w-full h-auto grid-cols-4">
+            <TabsTrigger value="profile" className="py-3 text-xs sm:text-sm">
+              <User className="w-4 h-4 mr-2 hidden sm:inline" />
+              Informações
+            </TabsTrigger>
+            <TabsTrigger value="team" className="py-3 text-xs sm:text-sm">
+              <Users className="w-4 h-4 mr-2 hidden sm:inline" />
+              Gerenciamento de Pessoal
+            </TabsTrigger>
+            <TabsTrigger value="security" className="py-3 text-xs sm:text-sm">
+              <Lock className="w-4 h-4 mr-2 hidden sm:inline" />
+              Segurança
+            </TabsTrigger>
+            <TabsTrigger
+              value="notifications"
+              className="py-3 text-xs sm:text-sm"
+            >
+              <Bell className="w-4 h-4 mr-2 hidden sm:inline" />
+              Notificações
+            </TabsTrigger>
+          </TabsList>
 
-            <TabsContent value="profile" className="space-y-6 animate-slide-up">
+          <TabsContent value="profile" className="space-y-6 animate-slide-up">
             <Card className="shadow-soft hover:shadow-medium transition-all duration-300">
               <CardHeader>
                 <div className="flex items-center gap-4">
@@ -303,11 +309,12 @@ const Profile = () => {
             </Card>
           </TabsContent>
 
-          {canSeeTeam && (
-            <TabsContent value="team" className="animate-slide-up">
-              <TeamManagement isOwner={isOwner} currentUserEmail={user?.email || ""} />
-            </TabsContent>
-          )}
+          <TabsContent value="team" className="animate-slide-up">
+            <TeamManagement
+              role={currentRole}
+              currentUserEmail={user?.email || ""}
+            />
+          </TabsContent>
 
           <TabsContent value="security" className="space-y-6 animate-slide-up">
             <Card className="shadow-soft hover:shadow-medium transition-all duration-300">
